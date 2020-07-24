@@ -4,15 +4,64 @@ use std::num::ParseIntError;
 
 const BOARD_SIZE_MAX: usize = 19;
 
+pub struct Board<T: Copy> {
+    size: u8,
+    board: [[T; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
+}
+
+impl<T: Copy> Board<T> {
+    fn get(&self, location: &Location) -> T {
+        return self.board[location.x as usize][location.y as usize];
+    }
+
+    fn set(&mut self, location: &Location, t: T) {
+        self.board[location.x as usize][location.y as usize] = t;
+    }
+
+    fn neighbors(&self, location: &Location) -> Vec<Location>{
+        let mut neighbors: Vec<Location> = Vec::new();
+
+        if location.x > 0 {
+            neighbors.push(Location {
+                x: location.x - 1,
+                y: location.y,
+            });
+        }
+
+        if location.x < self.size - 1 {
+            neighbors.push(Location {
+                x: location.x + 1,
+                y: location.y,
+            });
+        }
+
+        if location.y > 0 {
+            neighbors.push(Location {
+                x: location.x ,
+                y: location.y - 1,
+            });
+        }
+
+        if location.y < self.size - 1 {
+            neighbors.push(Location {
+                x: location.x,
+                y: location.y + 1,
+            });
+        }
+
+        return neighbors;
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ChessType {
-    None = 0,
-    Black = 1,
-    White = 2,
+    None,
+    Black,
+    White,
 }
 
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub struct Location {
     pub x: u8,
     pub y: u8,
@@ -73,6 +122,7 @@ pub struct Chess {
     pub chess_type: ChessType,
     pub location: Location,
 }
+
 pub struct ChessChange {
     pub at: Chess,
     pub remove: BTreeSet<Chess>,
@@ -84,10 +134,7 @@ pub enum MoveError {
     NoMove,
 }
 
-pub struct GoBoard {
-    size: u8,
-    board: [[ChessType; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
-}
+pub type GoBoard = Board<ChessType>;
 
 impl GoBoard {
     pub fn new(size: u8) -> GoBoard {
@@ -98,23 +145,23 @@ impl GoBoard {
     }
 
     pub fn make_move(&mut self, chess_type: ChessType, location: Location) -> Result<ChessChange, MoveError> {
-        let board_chess = self.board[location.x as usize][location.y as usize];
+        let board_chess = self.get(&location);
 
         match board_chess {
             ChessType::None => {
-                self.board[location.x as usize][location.y as usize] = chess_type;
+                self.set(&location, chess_type);
                 let deads = GoBoardLiberty::get_deads(self);
 
                 match chess_type {
                     ChessType::Black => {
                         if deads.0.len() > 0 && deads.1.len() == 0 {
-                            self.board[location.x as usize][location.y as usize] = ChessType::None;
+                            self.set(&location, ChessType::None);
                             return Err(MoveError::NoLiberty(location));
                         }
                     },
                     ChessType::White => {
                         if deads.1.len() > 0 && deads.0.len() == 0 {
-                            self.board[location.x as usize][location.y as usize] = ChessType::None;
+                            self.set(&location, ChessType::None);
                             return Err(MoveError::NoLiberty(location));
                         }
                     },
@@ -139,10 +186,7 @@ impl GoBoard {
 
 }
 
-struct GoBoardLiberty {
-    size: u8,
-    board: [[bool; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
-}
+type GoBoardLiberty = Board<bool>;
 
 impl GoBoardLiberty {
     fn new(size: u8) -> GoBoardLiberty {
@@ -152,27 +196,31 @@ impl GoBoardLiberty {
         }
     }
 
-    fn get_deads(board: &GoBoard) -> (Vec<(i16, i16)>, Vec<(i16, i16)>) {
-        let mut deads: (Vec<(i16, i16)>, Vec<(i16, i16)>) = (Vec::new(), Vec::new());
+    fn get_deads(board: &GoBoard) -> (Vec<Location>, Vec<Location>) {
+        let mut deads: (Vec<Location>, Vec<Location>) = (Vec::new(), Vec::new());
 
         let board_liberty = GoBoardLiberty::make(board);
 
         for idx1 in 0..board.size {
             for idx2 in 0..board.size {
-                match board.board[idx1 as usize][idx2 as usize] {
+                let location = Location {
+                    x: idx1,
+                    y: idx2,
+                };
+                match board.get(&location) {
                     ChessType::Black => {
-                        match board_liberty.board[idx1 as usize][idx2 as usize] {
+                        match board_liberty.get(&location) {
                             true => continue,
                             false => {
-                                deads.0.push((idx1 as i16, idx2 as i16));
+                                deads.0.push(location);
                             }
                         }
                     },
                     ChessType::White => {
-                        match board_liberty.board[idx1 as usize][idx2 as usize] {
+                        match board_liberty.get(&location) {
                             true => continue,
                             false => {
-                                deads.1.push((idx1 as i16, idx2 as i16));
+                                deads.1.push(location);
                             }
                         }
                     },
@@ -189,60 +237,43 @@ impl GoBoardLiberty {
 
         for idx1 in 0..board.size {
             for idx2 in 0..board.size {
-                if board.board[idx1 as usize][idx2 as usize] == ChessType::None {
-                    let directions = [
-                        (idx1 as i16 - 1, idx2 as i16),
-                        (idx1 as i16 + 1, idx2 as i16),
-                        (idx1 as i16, idx2 as i16 - 1),
-                        (idx1 as i16, idx2 as i16 + 1),
-                    ];
+                let location = Location {
+                    x: idx1,
+                    y: idx2,
+                };
+                if board.get(&location) == ChessType::None {
+                    let mut spread_start: Vec<Location> = Vec::new();
 
-                    for &location in directions.iter() {
-                        let mut ls: Vec<(i16, i16)> = Vec::new();
+                    for location in board.neighbors(&location).iter() {
+                        match board_liberty.get(location) {
+                            false => {
+                                let has_liberty = match board.get(&location) {
+                                    ChessType::None => continue,
+                                    ChessType::Black => {
+                                        true
+                                    },
+                                    ChessType::White => {
+                                        true
+                                    },
+                                };
+                                if !board_liberty.get(location) {
+                                    board_liberty.set(location, has_liberty);
+                                    spread_start.push(*location);
+                                }
+                            },
+                            true => continue,
+                        };
+                    }
 
-                        ls.push(location);
-
-                        while ls.len() > 0 {
-                            let location = ls.pop().unwrap();
-
-                            if location.0 < 0 || location.0 >= board.size as i16 ||
-                                location.1 < 0 || location.1 >= board.size as i16 {
+                    while let Some(spread_location) = spread_start.pop() {
+                        for next_location in board.neighbors(&spread_location).iter() {
+                            if board.get(&next_location) != board.get(&spread_location) {
                                 continue;
                             }
 
-                            match board_liberty.board[location.0 as usize][location.1 as usize] {
-                                false => {
-                                    board_liberty.board[location.0 as usize][location.1 as usize] = match board.board[location.0 as usize][location.1 as usize] {
-                                        ChessType::None => continue,
-                                        ChessType::Black => {
-                                            true
-                                        },
-                                        ChessType::White => {
-                                            true
-                                        },
-                                    }
-                                },
-                                true => continue,
-                            };
-
-                            let directions = [
-                                (location.0 - 1, location.1),
-                                (location.0 + 1, location.1),
-                                (location.0, location.1 - 1),
-                                (location.0, location.1 + 1),
-                            ];
-
-                            for next_location in directions.iter() {
-                                if next_location.0 < 0 || next_location.0 >= board.size as i16 ||
-                                    next_location.1 < 0 || next_location.1 >= board.size as i16 {
-                                    continue;
-                                }
-
-                                if board.board[next_location.0 as usize][next_location.1 as usize] != board.board[location.0 as usize][location.1 as usize] {
-                                    continue;
-                                }
-
-                                ls.push(*next_location);
+                            if !board_liberty.get(next_location) {
+                                board_liberty.set(next_location, true);
+                                spread_start.push(*next_location);
                             }
                         }
                     }
@@ -251,5 +282,13 @@ impl GoBoardLiberty {
         }
 
         board_liberty
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
     }
 }

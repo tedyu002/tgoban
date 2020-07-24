@@ -1,5 +1,3 @@
-mod go_board;
-
 use go_board::{GoBoard, ChessType, MoveError};
 use std::io;
 

@@ -1,13 +1,9 @@
-#[package]
-name = "go-game"
+[package]
+name = "go_board"
 version = "0.1.0"
 authors = ["Tzu-Te Yu <tedyu002@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-	"go_board",
-	"text_client",
-]
+[dependencies]
