@@ -3,8 +3,11 @@ use std::io;
 
 fn main() {
     let mut board = GoBoard::new(19);
+    let mut current_chess = ChessType::Black;
 
     loop {
+        println!("{}", board);
+
         let mut location = String::new();
 
         io::stdin()
@@ -21,9 +24,21 @@ fn main() {
 
         println!("Location: {} {}", location.x, location.y);
 
-        match board.make_move(ChessType::Black, location) {
+        match board.make_move(current_chess, location) {
             Ok(chess_change) => {
                 println!("Place at {} {}", chess_change.at.location.x, chess_change.at.location.y);
+
+                current_chess = match current_chess {
+                    ChessType::Black => {
+                        ChessType::White
+                    },
+                    ChessType::White => {
+                        ChessType::Black
+                    },
+                    ChessType::None => {
+                        panic!("Impossible chess");
+                    }
+                };
             },
             Err(err) => {
                 match err {

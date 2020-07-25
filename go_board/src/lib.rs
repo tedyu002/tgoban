@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
 use std::num::ParseIntError;
 
 const BOARD_SIZE_MAX: usize = 19;
@@ -125,7 +124,22 @@ pub struct Chess {
 
 pub struct ChessChange {
     pub at: Chess,
-    pub remove: BTreeSet<Chess>,
+    pub remove: Vec<Location>,
+}
+
+impl ChessChange {
+    fn new() -> ChessChange {
+        ChessChange {
+            at: Chess {
+                chess_type: ChessType::None,
+                location: Location {
+                    x: 0,
+                    y: 0,
+                }
+            },
+            remove: Vec::new(),
+        }
+    }
 }
 
 pub enum MoveError {
@@ -152,31 +166,41 @@ impl GoBoard {
                 self.set(&location, chess_type);
                 let deads = GoBoardLiberty::get_deads(self);
 
+                let mut chess_change = ChessChange::new();
+
                 match chess_type {
+                    ChessType::None => {
+                        return Err(MoveError::NoMove);
+                    },
                     ChessType::Black => {
                         if deads.0.len() > 0 && deads.1.len() == 0 {
                             self.set(&location, ChessType::None);
                             return Err(MoveError::NoLiberty(location));
                         }
+                        self.set(&location, chess_type);
+
+                        chess_change.at.chess_type = chess_type;
+                        chess_change.at.location = location;
+                        chess_change.remove = deads.1;
                     },
                     ChessType::White => {
                         if deads.1.len() > 0 && deads.0.len() == 0 {
                             self.set(&location, ChessType::None);
                             return Err(MoveError::NoLiberty(location));
                         }
+                        self.set(&location, chess_type);
+
+                        chess_change.at.chess_type = chess_type;
+                        chess_change.at.location = location;
+                        chess_change.remove = deads.0;
                     },
-                    ChessType::None => {
-                        return Err(MoveError::NoMove);
-                    }
                 };
 
-                Ok(ChessChange {
-                    at: Chess {
-                        chess_type,
-                        location,
-                    },
-                    remove: BTreeSet::new()
-                })
+                for location in chess_change.remove.iter() {
+                    self.set(location, ChessType::None);
+                }
+
+                return Ok(chess_change);
             },
             _ => {
                 Err(MoveError::Exist(location))
@@ -184,6 +208,34 @@ impl GoBoard {
         }
     }
 
+}
+
+impl std::fmt::Display for GoBoard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for i in 0..self.size {
+            for j in 0..self.size {
+                let location = Location {
+                    x: i,
+                    y: j,
+                };
+
+                let character = match self.get(&location) {
+                    ChessType::None => '.',
+                    ChessType::Black => 'X',
+                    ChessType::White => 'O',
+                };
+
+                if let Err(error) = write!(f, "{}", character) {
+                    return Err(error);
+                }
+            }
+            if let Err(error) = write!(f, "{}", "\n") {
+                return Err(error);
+            }
+        }
+
+        return Ok(());
+    }
 }
 
 type GoBoardLiberty = Board<bool>;
