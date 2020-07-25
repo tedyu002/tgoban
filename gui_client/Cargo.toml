@@ -1,15 +1,12 @@
-#[package]
-name = "go-game"
+[package]
+name = "gui_client"
 version = "0.1.0"
 authors = ["Tzu-Te Yu <tedyu002@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [
-	"go_board",
-	"text_client",
-	"go_game_engine",
-	"gui_client",
-]
+[dependencies]
+druid = "0.6.0"
+go_board = { path = "../go_board" }
+go_game_engine = { path = "../go_game_engine" }

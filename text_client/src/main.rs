@@ -1,12 +1,12 @@
 use go_board::{GoBoard, ChessType, MoveError};
+use go_game_engine::GoGameEngine;
 use std::io;
 
 fn main() {
-    let mut board = GoBoard::new(19);
-    let mut current_chess = ChessType::Black;
+    let mut game = GoGameEngine::new(19);
 
     loop {
-        println!("{}", board);
+        println!("{}", game);
 
         let mut location = String::new();
 
@@ -24,21 +24,11 @@ fn main() {
 
         println!("Location: {} {}", location.x, location.y);
 
-        match board.make_move(current_chess, location) {
-            Ok(chess_change) => {
-                println!("Place at {} {}", chess_change.at.location.x, chess_change.at.location.y);
+        game.make_move(location);
+        println!("{}", game);
 
-                current_chess = match current_chess {
-                    ChessType::Black => {
-                        ChessType::White
-                    },
-                    ChessType::White => {
-                        ChessType::Black
-                    },
-                    ChessType::None => {
-                        panic!("Impossible chess");
-                    }
-                };
+        match game.make_move(location) {
+            Ok(()) => {
             },
             Err(err) => {
                 match err {

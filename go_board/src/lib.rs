@@ -9,7 +9,7 @@ pub struct Board<T: Copy> {
 }
 
 impl<T: Copy> Board<T> {
-    fn get(&self, location: &Location) -> T {
+    pub fn get(&self, location: &Location) -> T {
         return self.board[location.x as usize][location.y as usize];
     }
 
@@ -116,7 +116,6 @@ impl std::str::FromStr for Location {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct Chess {
     pub chess_type: ChessType,
     pub location: Location,
@@ -215,8 +214,8 @@ impl std::fmt::Display for GoBoard {
         for i in 0..self.size {
             for j in 0..self.size {
                 let location = Location {
-                    x: i,
-                    y: j,
+                    x: j,
+                    y: self.size - i - 1,
                 };
 
                 let character = match self.get(&location) {
