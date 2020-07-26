@@ -17,8 +17,6 @@ use board::BoardWidget;
 
 const BOARD_SIZE: u8 = 19;
 
-
-
 fn main() -> Result<(), PlatformError> {
     let game = DruidGoGame {
         game: Arc::new(RefCell::new(GoGameEngine::new(BOARD_SIZE))),
