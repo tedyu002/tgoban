@@ -32,7 +32,7 @@ impl Widget<DruidGoGame> for BoardWidget {
                 if self.down_location == location {
                     match data.game.borrow_mut().make_move(location) {
                         Ok(_) => {
-                            ctx.request_paint();
+                            data.version += 1;
                         },
                         Err(_) => {
                             return;
@@ -62,11 +62,16 @@ impl Widget<DruidGoGame> for BoardWidget {
         //
         // To check if a dimension is infinite or not (e.g. scrolling):
         // bc.is_width_bounded() / bc.is_height_bounded()
-        bc.max()
+        let size = bc.max();
+        let size = size.width.min(size.height);
+
+        Size {
+            width: size,
+            height: size,
+        }
     }
 
     fn paint(&mut self, ctx: &mut PaintCtx, data: &DruidGoGame, env: &Env) {
-
 		let size = ctx.size();
 
 		let board_size = size.width.min(size.height);

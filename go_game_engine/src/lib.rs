@@ -2,14 +2,15 @@ use go_board::{GoBoard, ChessChange, MoveError, Location, ChessType, Chess};
 
 #[derive(Copy, Clone)]
 pub enum Player {
-    Black,
-    White,
+    Black = 0,
+    White = 1,
 }
 
 pub struct GoGameEngine {
     board: GoBoard,
     steps: Vec<ChessChange>,
     player: Player,
+    deads: [i32; 8],
 }
 
 impl GoGameEngine {
@@ -18,6 +19,7 @@ impl GoGameEngine {
             board: GoBoard::new(size),
             steps: Vec::new(),
             player: Player::Black,
+            deads: [0; 8],
         }
     }
 
@@ -33,6 +35,7 @@ impl GoGameEngine {
 
         match self.board.make_move(chess_type, location) {
             Ok(chess_change) => {
+                self.deads[self.player as usize] += chess_change.remove.len() as i32;
                 self.steps.push(chess_change);
                 self.switch_player();
             },
@@ -67,6 +70,10 @@ impl GoGameEngine {
             Player::Black => Player::White,
             Player::White => Player::Black,
         };
+    }
+
+    pub fn deads(&self, player: &Player) -> i32 {
+        return self.deads[*player as usize];
     }
 }
 
