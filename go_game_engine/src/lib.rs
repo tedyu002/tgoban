@@ -72,6 +72,10 @@ impl GoGameEngine {
         };
     }
 
+    pub fn player(&self) -> Player {
+        return self.player;
+    }
+
     pub fn deads(&self, player: &Player) -> i32 {
         return self.deads[*player as usize];
     }

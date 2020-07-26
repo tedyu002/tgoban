@@ -5,6 +5,16 @@ use crate::game::DruidGoGame;
 
 
 pub fn make_game_info_widget() -> Flex<DruidGoGame> {
+    let player = Label::new("Player");
+    let player_info = Label::new(|data: &DruidGoGame, _env: &_| {
+        format!("{}",
+            match data.game.borrow().player() {
+                Player::Black => "Black",
+                Player::White => "White",
+            }
+        )
+    });
+
     let black = Label::new("Black");
     let black_deads = Label::new(|data: &DruidGoGame, _env: &_| {
         format!("{}", data.game.borrow().deads(&Player::Black))
@@ -16,6 +26,11 @@ pub fn make_game_info_widget() -> Flex<DruidGoGame> {
     });
 
     Flex::column()
+        .with_child(
+            Flex::row()
+                .with_child(player)
+                .with_child(player_info)
+        )
         .with_child(
             Flex::row()
                 .with_child(black)

@@ -162,6 +162,23 @@ impl BoardWidget {
 
             ctx.draw_text(&font_layout, (font_x, board_size - chess_cen), &Color::BLACK);
         }
+
+        if game_size == 19 {
+            let cross = [3, 9, 15];
+
+            for &row in cross.iter() {
+                for &col in cross.iter() {
+                    let point = Point {
+                        x: chess_size + col as f64 * chess_size + chess_cen,
+                        y: board_size - chess_size - row as f64 * chess_size - chess_cen,
+                    };
+
+                    let circle = Circle::new(point, chess_size / 10.0);
+
+                    ctx.fill(circle, &Color::BLACK);
+                }
+            }
+        }
     }
 
     fn paint_chess(&mut self, ctx: &mut PaintCtx, data: &DruidGoGame, _env: &Env, game_size: u8, board_size: f64, chess_size: f64) {
@@ -191,7 +208,7 @@ impl BoardWidget {
                     y: board_size - chess_size - row as f64 * chess_size - chess_cen,
                 };
 
-                let circle = Circle::new(point, (chess_size/ 2.0 ) * CHESS_RATIO);
+                let circle = Circle::new(point, (chess_size / 2.0) * CHESS_RATIO);
 
                 ctx.fill(circle, &color);
             }
