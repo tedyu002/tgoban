@@ -21,6 +21,10 @@ impl GoGameEngine {
         }
     }
 
+    pub fn size(&self) -> u8 {
+        return self.board.size();
+    }
+
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
         let chess_type = match self.player {
             Player::Black => ChessType::Black,

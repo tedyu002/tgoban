@@ -13,6 +13,10 @@ impl<T: Copy> Board<T> {
         return self.board[location.x as usize][location.y as usize];
     }
 
+    pub fn size(&self) -> u8 {
+        return self.size;
+    }
+
     fn set(&mut self, location: &Location, t: T) {
         self.board[location.x as usize][location.y as usize] = t;
     }
