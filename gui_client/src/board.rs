@@ -1,4 +1,5 @@
 use druid::Data;
+use druid::piet::{FontBuilder, Text, TextLayoutBuilder};
 use druid::kurbo::{Line, Circle};
 use druid::widget::prelude::*;
 use druid::{Color, Point, Rect};
@@ -102,7 +103,23 @@ impl BoardWidget {
     fn paint_board(&mut self, ctx: &mut PaintCtx, _data: &DruidGoGame, _env: &Env, game_size: u8, board_size: f64, chess_size: f64) {
         let chess_cen = chess_size / 2.0;
 
+        let font = ctx
+            .text()
+            .new_font_by_name("Segoe UI", chess_cen)
+            .build()
+            .unwrap();
+
         for row in 1..=game_size {
+            let font_layout = ctx
+                .text()
+                .new_text_layout(&font, &format!("{}", game_size - (row - 1)), std::f64::INFINITY)
+                .build()
+                .unwrap();
+
+            let font_y = chess_size * row as f64 + chess_cen * 1.5;
+
+            ctx.draw_text(&font_layout, (chess_cen, font_y), &Color::BLACK);
+
             let line = Line::new(
                 Point{
                     x: chess_size + chess_cen,
@@ -113,11 +130,24 @@ impl BoardWidget {
                     y: chess_size * row as f64 + chess_cen,
                 },
             );
-
             ctx.stroke(line, &Color::BLACK, 1.0);
+
+            ctx.draw_text(&font_layout, (board_size - chess_size, font_y), &Color::BLACK);
         }
 
         for col in 1..=game_size {
+            let alphabet = ('A' as u8 + (col - 1)) as char;
+
+            let font_layout = ctx
+                .text()
+                .new_text_layout(&font, &format!("{}", alphabet), std::f64::INFINITY)
+                .build()
+                .unwrap();
+
+            let font_x = chess_size * col as f64 + chess_cen * 0.75;
+
+            ctx.draw_text(&font_layout, (font_x, chess_size), &Color::BLACK);
+
             let line = Line::new(
                 Point{
                     x: chess_size * col as f64 + chess_cen,
@@ -128,8 +158,9 @@ impl BoardWidget {
                     y: board_size - chess_size - chess_cen,
                 },
             );
-
             ctx.stroke(line, &Color::BLACK, 1.0);
+
+            ctx.draw_text(&font_layout, (font_x, board_size - chess_cen), &Color::BLACK);
         }
     }
 
