@@ -1,6 +1,3 @@
-use std::cmp::Ordering;
-use std::num::ParseIntError;
-
 const BOARD_SIZE_MAX: usize = 19;
 
 pub struct Board<T: Copy> {

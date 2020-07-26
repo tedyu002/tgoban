@@ -1,14 +1,13 @@
 use druid::Data;
 use druid::kurbo::{Line, Circle};
 use druid::widget::prelude::*;
-use druid::piet::{FontBuilder, ImageFormat, InterpolationMode, Text, TextLayoutBuilder};
-use druid::{Affine, Color, LocalizedString, Point, Rect};
+use druid::{Color, Point, Rect};
 use druid::Event::{MouseDown, MouseUp};
 
 use crate::game::DruidGoGame;
 use go_board::{Location, ChessType};
         
-const ChessRatio: f64 = 0.8;
+const CHESS_RATIO: f64 = 0.8;
 
 pub struct BoardWidget {
     down_location: Location,
@@ -16,7 +15,7 @@ pub struct BoardWidget {
 
 impl Widget<DruidGoGame> for BoardWidget {
     fn event(&mut self, ctx: &mut EventCtx, event: &Event, data: &mut DruidGoGame, env: &Env) {
-        let location = match event {
+        match event {
             MouseDown(mouse_event) => {
                 let location = match self.get_location(ctx, data, env, mouse_event.pos) {
                     Ok(location) => location,
@@ -51,7 +50,7 @@ impl Widget<DruidGoGame> for BoardWidget {
     }
 
     fn update(&mut self, ctx: &mut UpdateCtx, old_data: &DruidGoGame, data: &DruidGoGame, _env: &Env) {
-        if (!old_data.same(data)) {
+        if !old_data.same(data) {
             ctx.request_paint();
         }
     }
@@ -95,7 +94,7 @@ impl BoardWidget {
 }
 
 impl BoardWidget {
-    fn paint_board(&mut self, ctx: &mut PaintCtx, data: &DruidGoGame, _env: &Env, game_size: u8, board_size: f64, chess_size: f64) {
+    fn paint_board(&mut self, ctx: &mut PaintCtx, _data: &DruidGoGame, _env: &Env, game_size: u8, board_size: f64, chess_size: f64) {
         let chess_cen = chess_size / 2.0;
 
         for row in 1..=game_size {
@@ -156,7 +155,7 @@ impl BoardWidget {
                     y: board_size - chess_size - row as f64 * chess_size - chess_cen,
                 };
 
-                let circle = Circle::new(point, (chess_size/ 2.0 ) * ChessRatio);
+                let circle = Circle::new(point, (chess_size/ 2.0 ) * CHESS_RATIO);
 
                 ctx.fill(circle, &color);
             }
@@ -197,7 +196,7 @@ impl BoardWidget {
         let distance = (point.x - chess_center.0, point.y - chess_center.1);
         let distance = distance.0 * distance.0 + distance.1 * distance.1;
 
-        if distance > (chess_cen * chess_cen) * (ChessRatio * ChessRatio) {
+        if distance > (chess_cen * chess_cen) * (CHESS_RATIO * CHESS_RATIO) {
             return Err(());
         }
 

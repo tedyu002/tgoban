@@ -1,8 +1,6 @@
 use std::cell::RefCell;
 use std::sync::Arc;
 
-use druid::Data;
-
 use go_game_engine::GoGameEngine;
 
 #[derive(Clone)]

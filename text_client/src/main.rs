@@ -1,4 +1,4 @@
-use go_board::{GoBoard, ChessType, MoveError};
+use go_board::MoveError;
 use go_game_engine::GoGameEngine;
 use std::io;
 
@@ -23,9 +23,6 @@ fn main() {
         };
 
         println!("Location: {} {}", location.x, location.y);
-
-        game.make_move(location);
-        println!("{}", game);
 
         match game.make_move(location) {
             Ok(()) => {
