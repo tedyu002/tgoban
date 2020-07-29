@@ -1,4 +1,9 @@
+mod link;
+
 use go_board::{GoBoard, ChessChange, MoveError, Location, ChessType, Chess};
+use crate::link::Tree;
+
+const PLAYER_NUM: usize = 2;
 
 #[derive(Copy, Clone)]
 pub enum Player {
@@ -6,20 +11,38 @@ pub enum Player {
     White = 1,
 }
 
+impl Player {
+    pub fn switch(&self) -> Player {
+        match self {
+            Player::Black => Player::White,
+            Player::White => Player::Black,
+        }
+    }
+}
+
+pub struct GoNode {
+    changes: Option<ChessChange>,
+    steps: i32,
+    deads: [i32; PLAYER_NUM],
+    player: Option<Player>,
+}
+
 pub struct GoGameEngine {
     board: GoBoard,
-    steps: Vec<ChessChange>,
-    player: Player,
-    deads: [i32; 8],
+    tree: Tree<GoNode>,
 }
 
 impl GoGameEngine {
     pub fn new(size: u8) -> GoGameEngine {
+        let root_node = GoNode {
+            changes: None,
+            steps: 0,
+            deads: [0; PLAYER_NUM],
+            player: None,
+        };
         GoGameEngine {
+            tree: Tree::new(root_node),
             board: GoBoard::new(size),
-            steps: Vec::new(),
-            player: Player::Black,
-            deads: [0; 8],
         }
     }
 
@@ -28,16 +51,30 @@ impl GoGameEngine {
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
-        let chess_type = match self.player {
-            Player::Black => ChessType::Black,
-            Player::White => ChessType::White,
+        let head_node = &self.tree.head.data;
+
+        let chess_type = match head_node.player {
+            None => ChessType::Black,
+            Some(player) => match player {
+                Player::Black => ChessType::White,
+                Player::White => ChessType::Black,
+            },
         };
 
         match self.board.make_move(chess_type, location) {
             Ok(chess_change) => {
-                self.deads[self.player as usize] += chess_change.remove.len() as i32;
-                self.steps.push(chess_change);
-                self.switch_player();
+                let mut node = GoNode {
+                    changes: Some(chess_change),
+                    steps: head_node.steps + 1,
+                    deads: head_node.deads.clone(),
+                    player: match head_node.player {
+                        None => Some(Player::Black),
+                        Some(player) => Some(player.switch()),
+                    }
+                };
+
+                node.deads[node.player.unwrap() as usize] += node.changes.as_ref().unwrap().remove.len() as i32;
+                self.tree.grow(node);
             },
             Err(err) => {
                 return Err(err);
@@ -52,42 +89,47 @@ impl GoGameEngine {
     }
 
     pub fn pass(&mut self) {
-        self.steps.push(ChessChange {
-            at: Chess {
-                chess_type: ChessType::None,
-                location: Location {
-                    x: 0,
-                    y: 0,
-                }
-            },
-            remove: Vec::new(),
-        });
-        self.switch_player();
-    }
+        let head_node = &self.tree.head.data;
 
-    fn switch_player(&mut self) {
-        self.player = match self.player {
-            Player::Black => Player::White,
-            Player::White => Player::Black,
+        let node = GoNode {
+            changes: None,
+            steps: head_node.steps + 1,
+            deads: head_node.deads.clone(),
+            player: match head_node.player {
+                None => Some(Player::Black),
+                Some(player) => Some(player.switch()),
+            }
         };
+
+        self.tree.grow(node);
     }
 
     pub fn player(&self) -> Player {
-        return self.player;
+        match &self.tree.head.data.player {
+            None => Player::Black,
+            Some(player) => player.switch(),
+        }
     }
 
     pub fn deads(&self, player: &Player) -> i32 {
-        return self.deads[*player as usize];
+        return self.tree.head.data.deads[*player as usize];
     }
 }
 
 impl std::fmt::Display for GoGameEngine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Err(err) = write!(f, "\tSteps: {}\n", self.steps.len() + 1) {
+        let head_node = &self.tree.head.data;
+
+        if let Err(err) = write!(f, "\tSteps: {}\n", head_node.steps + 1) {
             return Err(err);
         };
 
-        if let Err(err) = write!(f, "\tPlayer : {}\n", match self.player {Player::Black => 'X', Player::White => 'O'}) {
+        let player = match head_node.player {
+            None => Player::Black,
+            Some(player) => player.switch(),
+        };
+
+        if let Err(err) = write!(f, "\tPlayer : {}\n", match player {Player::Black => 'X', Player::White => 'O'}) {
             return Err(err);
         }
 
