@@ -4,6 +4,7 @@ use druid::kurbo::{Line, Circle};
 use druid::widget::prelude::*;
 use druid::{Color, Point, Rect};
 use druid::Event::{MouseDown, MouseUp};
+use druid::MouseButton;
 
 use crate::game::DruidGoGame;
 use go_board::{Location, ChessType};
@@ -25,20 +26,31 @@ impl Widget<DruidGoGame> for BoardWidget {
                 self.down_location = location;
             },
             MouseUp(mouse_event) => {
-                let location = match self.get_location(ctx, data, env, mouse_event.pos) {
-                    Ok(location) => location,
-                    Err(_) => return,
-                };
+                match mouse_event.button {
+                    MouseButton::Left => {
+                        let location = match self.get_location(ctx, data, env, mouse_event.pos) {
+                            Ok(location) => location,
+                            Err(_) => return,
+                        };
 
-                if self.down_location == location {
-                    match data.game.borrow_mut().make_move(location) {
-                        Ok(_) => {
-                            data.version += 1;
-                        },
-                        Err(_) => {
-                            return;
+                        if self.down_location == location {
+                            match data.game.borrow_mut().make_move(location) {
+                                Ok(_) => {
+                                    data.version += 1;
+                                },
+                                Err(_) => {
+                                    return;
+                                }
+                            };
                         }
-                    };
+                    },
+                    MouseButton::Right => {
+                        data.game.borrow_mut().regret();
+                        data.version += 1;
+                    },
+                    _ => {
+                        return;
+                    }
                 }
             },
             _ => {

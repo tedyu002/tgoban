@@ -208,6 +208,25 @@ impl GoBoard {
         }
     }
 
+    pub fn reverse_change(&mut self, chess_change: &ChessChange) {
+        let back_chess_type = match chess_change.at.chess_type {
+            ChessType::None => {
+                return;
+            },
+            ChessType::Black => {
+                ChessType::White
+            },
+            ChessType::White => {
+                ChessType::Black
+            },
+        };
+
+        self.board[chess_change.at.location.x as usize][chess_change.at.location.y as usize] = ChessType::None;
+
+        for location in chess_change.remove.iter() {
+            self.board[location.x as usize][location.y as usize] = back_chess_type;
+        }
+    }
 }
 
 impl std::fmt::Display for GoBoard {
@@ -279,7 +298,7 @@ impl GoBoardLiberty {
                     ChessType::None => continue,
                 }
             }
-        }        
+        }
 
         deads
     }
