@@ -1,9 +1,9 @@
 mod link;
 
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use go_board::{GoBoard, ChessChange, MoveError, Location, ChessType};
-use crate::link::Tree;
+use crate::link::{Tree, Node};
 
 const PLAYER_NUM: usize = 2;
 
@@ -53,39 +53,41 @@ impl GoGameEngine {
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
-        let grow_node = {
-            let head_node = &self.tree.head.borrow().data;
+        let mut make_move_error: Option<MoveError> = None;
+        let mut chess_type = ChessType::None;
 
-            let chess_type = match head_node.player {
+        self.tree.access_head(|head| {
+           chess_type = match head.player {
                 None => ChessType::Black,
                 Some(player) => match player {
                     Player::Black => ChessType::White,
                     Player::White => ChessType::Black,
                 },
             };
+        });
 
-            match self.board.make_move(chess_type, location) {
-                Ok(chess_change) => {
+        match self.board.make_move(chess_type, location) {
+            Ok(chess_change) => {
+                self.tree.grow(|head| {
                     let mut node = GoNode {
                         changes: Some(chess_change),
-                        steps: head_node.steps + 1,
-                        deads: head_node.deads.clone(),
-                        player: match head_node.player {
+                        steps: head.steps + 1,
+                        deads: head.deads.clone(),
+                        player: match head.player {
                             None => Some(Player::Black),
                             Some(player) => Some(player.switch()),
-                        }
+                        },
                     };
 
                     node.deads[node.player.unwrap() as usize] += node.changes.as_ref().unwrap().remove.len() as i32;
-                    node
-                },
-                Err(err) => {
-                    return Err(err);
-                },
-            }
-        };
 
-        self.tree.grow(grow_node);
+                    return node;
+                });
+            },
+            Err(err) => {
+                return Err(err);
+            },
+        }
 
         return Ok(());
     }
@@ -95,93 +97,81 @@ impl GoGameEngine {
     }
 
     pub fn pass(&mut self) {
-        let node = {
-            let head_node = &self.tree.head.borrow().data;
-
-            Some(GoNode {
+        self.tree.grow(|head_data| {
+            GoNode {
                 changes: None,
-                steps: head_node.steps + 1,
-                deads: head_node.deads.clone(),
-                player: match head_node.player {
+                steps: head_data.steps + 1,
+                deads: head_data.deads.clone(),
+                player: match head_data.player {
                     None => Some(Player::Black),
                     Some(player) => Some(player.switch()),
                 }
-            })
-        };
-
-        /* Maybe potenstion HEAD is not the same */
-        if let Some(node) = node {
-            self.tree.grow(node);
-        }
+            }
+        });
     }
 
     pub fn player(&self) -> Player {
-        match &self.tree.head.borrow().data.player {
-            None => Player::Black,
-            Some(player) => player.switch(),
-        }
+        let mut player = Player::Black;
+
+        self.tree.access_head(|head| {
+            player = match head.player {
+                None => Player::Black,
+                Some(player) => player.switch(),
+            };
+        });
+
+        return player;
     }
 
     pub fn deads(&self, player: &Player) -> i32 {
-        return self.tree.head.borrow().data.deads[*player as usize];
+        let mut deads:i32 = 0;
+
+        self.tree.access_head(|head| {
+            deads = head.deads[*player as usize];
+        });
+
+        return deads;
     }
 
     pub fn regret(&mut self) {
-        let parent = Some({
-            match &self.tree.head.borrow().parent {
-                None => {return;},
-                Some(weak_node) => {
-                    /* Should always success since the root can walk to it */
-                    let parent = weak_node.upgrade().unwrap();
-                    {
-                        let mut parent = parent.borrow_mut();
+        let mut chess_change: Option<ChessChange> = None;
 
-                        let index = {
-                            parent.children.iter().position(|x| {
-                                Arc::ptr_eq(&x, &self.tree.head)
-                            }).unwrap()
-                        };
-                        parent.children.remove(index);
-                    }
-
-                    parent
-                }
-            }
+        self.tree.remove_head(|node_data| {
+            chess_change = node_data.changes.clone();
         });
 
-        if let Some(parent) = parent {
-            match &self.tree.head.borrow().data.changes {
-                Some(chess_change) => {
-                    self.board.reverse_change(chess_change);
-                },
-                None => {},
-            }
-            self.tree.head = parent;
+        if let Some(chess_change) = chess_change {
+            self.board.reverse_change(&chess_change);
         }
     }
 }
 
 impl std::fmt::Display for GoGameEngine {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let head_node = &self.tree.head.borrow().data;
+        let mut res: std::fmt::Result = Ok(());
 
-        if let Err(err) = write!(f, "\tSteps: {}\n", head_node.steps + 1) {
-            return Err(err);
-        };
+        self.tree.access_head(|head| {
+            if let Err(err) = write!(f, "\tSteps: {}\n", head.steps + 1) {
+                res = Err(err);
+                return;
+            };
 
-        let player = match head_node.player {
-            None => Player::Black,
-            Some(player) => player.switch(),
-        };
+            let player = match head.player {
+                None => Player::Black,
+                Some(player) => player.switch(),
+            };
 
-        if let Err(err) = write!(f, "\tPlayer : {}\n", match player {Player::Black => 'X', Player::White => 'O'}) {
-            return Err(err);
-        }
+            if let Err(err) = write!(f, "\tPlayer : {}\n", match player {Player::Black => 'X', Player::White => 'O'}) {
+                res = Err(err);
+                return;
+            }
 
-        if let Err(err) = write!(f, "{}", self.board) {
-            return Err(err);
-        }
+            if let Err(err) = write!(f, "{}", self.board) {
+                res = Err(err);
+                return;
+            }
+        });
 
-        return Ok(());
+        return res;
     }
 }

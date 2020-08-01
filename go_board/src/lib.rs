@@ -117,11 +117,13 @@ impl std::str::FromStr for Location {
     }
 }
 
+#[derive(Clone)]
 pub struct Chess {
     pub chess_type: ChessType,
     pub location: Location,
 }
 
+#[derive(Clone)]
 pub struct ChessChange {
     pub at: Chess,
     pub remove: Vec<Location>,
