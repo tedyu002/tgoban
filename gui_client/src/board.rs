@@ -7,7 +7,7 @@ use druid::Event::{MouseDown, MouseUp};
 use druid::MouseButton;
 
 use crate::game::DruidGoGame;
-use go_board::{Location, ChessType};
+use go_game_engine::{Location, ChessType};
         
 const CHESS_RATIO: f64 = 0.8;
 

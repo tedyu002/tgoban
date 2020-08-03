@@ -8,5 +8,4 @@ edition = "2018"
 
 [dependencies]
 druid = "0.6.0"
-go_board = { path = "../go_board" }
 go_game_engine = { path = "../go_game_engine" }

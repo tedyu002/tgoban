@@ -8,7 +8,6 @@
 
 [workspace]
 members = [
-	"go_board",
 	"text_client",
 	"go_game_engine",
 	"httpd",

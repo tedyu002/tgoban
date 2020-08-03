@@ -1,5 +1,5 @@
-use go_board::MoveError;
-use go_game_engine::GoGameEngine;
+use go_game_engine::{GoGameEngine, Location, MoveError};
+
 use std::io;
 
 fn main() {
@@ -14,7 +14,7 @@ fn main() {
             .read_line(&mut location)
             .expect("Failed to read line");
 
-        let location: go_board::Location = match location.trim().parse() {
+        let location: Location = match location.trim().parse() {
             Ok(location) => location,
             Err(_) => {
                 println!("Parse error");

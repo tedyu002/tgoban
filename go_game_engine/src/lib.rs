@@ -1,7 +1,9 @@
-mod link;
+mod tree;
+mod board;
 
-use go_board::{GoBoard, ChessChange, MoveError, Location, ChessType};
-use crate::link::{Tree};
+pub use crate::board::{GoBoard, ChessChange, MoveError, Location, ChessType};
+use crate::tree::{Tree};
+
 
 const PLAYER_NUM: usize = 2;
 

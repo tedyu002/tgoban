@@ -1,13 +1,13 @@
 mod protocol;
 
+#[macro_use]
+extern crate serde_derive;
+
 use actix::{Actor, StreamHandler};
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
 use actix_web_actors::ws;
 
-#[macro_use]
-extern crate serde_derive;
-
-use go_game_engine::GoGameEngine;
+use go_game_engine::{Location, GoGameEngine, ChessType};
 
 const BOARD_SIZE: u8 = 19;
 
@@ -33,7 +33,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                     protocol::Action::Play(location) => {
                         let mut board: Vec<char> = Vec::new();
 
-                        match self.go_game.make_move(go_board::Location {
+                        match self.go_game.make_move(Location {
                             x: location.x,
                             y: location.y,
                         }) {
@@ -43,13 +43,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
 
                         for x in 0..BOARD_SIZE {
                             for y in 0..BOARD_SIZE {
-                                let chess = match self.go_game.get_chess(go_board::Location {
+                                let chess = match self.go_game.get_chess(Location {
                                     x,
                                     y,
                                 }) {
-                                    go_board::ChessType::Black => 'B',
-                                    go_board::ChessType::White => 'W',
-                                    go_board::ChessType::None => '0',
+                                    ChessType::Black => 'B',
+                                    ChessType::White => 'W',
+                                    ChessType::None => '0',
                                 };
 
                                 board.push(chess);
