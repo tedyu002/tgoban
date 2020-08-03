@@ -1,9 +1,7 @@
 mod link;
 
-use std::sync::{Arc, RwLock};
-
 use go_board::{GoBoard, ChessChange, MoveError, Location, ChessType};
-use crate::link::{Tree, Node};
+use crate::link::{Tree};
 
 const PLAYER_NUM: usize = 2;
 
@@ -53,7 +51,6 @@ impl GoGameEngine {
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
-        let mut make_move_error: Option<MoveError> = None;
         let mut chess_type = ChessType::None;
 
         self.tree.access_head(|head| {

@@ -35,7 +35,6 @@ impl<T> Tree<T> {
             },
             Err(_) => {
                 panic!("Failed to get read lock");
-                return;
             }
         };
 
@@ -53,7 +52,6 @@ impl<T> Tree<T> {
                 },
                 Err(_) => {
                     panic!("Failed to get read lock");
-                    return;
                 }
             };
 

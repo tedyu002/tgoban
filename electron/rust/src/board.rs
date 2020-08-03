@@ -1,8 +1,6 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{Element, Event, WebSocket, MessageEvent};
-use core::convert::From;
-use serde::Deserialize;
+use web_sys::{Element, WebSocket, MessageEvent};
 
 use crate::prelude::*;
 
@@ -73,7 +71,6 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
     }
 
     for col in 0..(BOARD_SIZE as i32) {
-        let text = document.create_element_ns(Some(SVG_NS), "text")?;
         let alphabet = 19 - col;
         let y = LINE_START + FONT_SIZE / 2 + CHESS_SIZE * col;
         {
@@ -120,7 +117,7 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
     let ws = WebSocket::new("ws://127.0.0.1:8088/ws/")?;
 
     {
-        let mut canvas = canvas.clone();
+        let canvas = canvas.clone();
         let onmessage_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
             let document = web_sys::window().unwrap().document().unwrap();
  
@@ -131,7 +128,7 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
     
                 let command: Result<Command, _> = serde_json::from_str(&txt);
 
-                if let Command::Set(board) = command.unwrap() {
+                if let Ok(Command::Set(board)) = command {
                     let children = canvas.children();
 
                     let mut circles: Vec<Element> = Vec::new();
@@ -184,7 +181,7 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
     {
         let canvas_c = canvas.clone();
-        let mut socket = socket.clone();
+        let socket = socket.clone();
 
         let closure = Closure::wrap(Box::new(move |mouse_event: web_sys::MouseEvent| {
             let rect = canvas_c.get_bounding_client_rect();

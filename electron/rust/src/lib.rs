@@ -2,7 +2,6 @@ mod board;
 mod prelude;
 
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 
 #[macro_use]
 extern crate serde_derive;
