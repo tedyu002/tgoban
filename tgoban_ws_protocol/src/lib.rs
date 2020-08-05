@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde_derive;
+
 use serde::Deserialize;
 
 #[derive(Deserialize, Serialize)]
@@ -13,7 +16,7 @@ pub enum Action {
     Back,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(tag="Command", content="content")]
 pub enum Command {
     Set(Vec<char>),

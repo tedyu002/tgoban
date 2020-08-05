@@ -10,7 +10,8 @@
 members = [
 	"text_client",
 	"go_game_engine",
-	"httpd",
+	"tgoban_ws_adapter",
+	"tgoban_ws_protocol",
 	"gui_client",
 	"electron/rust",
 ]

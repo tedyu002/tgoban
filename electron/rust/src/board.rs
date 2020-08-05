@@ -2,6 +2,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{Element, WebSocket, MessageEvent};
 
+use tgoban_ws_protocol as protocol;
+
 use crate::prelude::*;
 
 const BOARD_SIZE: u8 = 19;
@@ -107,12 +109,6 @@ fn convert_location(container: (f64, f64), offset: (i32, i32)) -> Option<(u8, u8
     }
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(tag="Command", content="content")]
-pub enum Command {
-    Set(Vec<char>),
-}
-
 pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
     let ws = WebSocket::new("ws://127.0.0.1:8088/ws/")?;
 
@@ -126,9 +122,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                 let txt = String::from_utf16(&raw).unwrap();
 //TODO                web_sys::window().unwrap().alert_with_message(&txt);
     
-                let command: Result<Command, _> = serde_json::from_str(&txt);
+                let command: Result<protocol::Command, _> = serde_json::from_str(&txt);
 
-                if let Ok(Command::Set(board)) = command {
+                if let Ok(protocol::Command::Set(board)) = command {
                     let children = canvas.children();
 
                     let mut circles: Vec<Element> = Vec::new();
@@ -188,8 +184,15 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
 
             if let Some(location) = convert_location((rect.width(), rect.height()), (mouse_event.offset_x(), mouse_event.offset_y())) {
                 match mouse_event.button() {
-                    0 => socket.send_with_str(&format!(r#"{{"Action": "Play", "content": {{"alphabet": {}, "digit":{} }} }}"#, location.0, location.1)),
-                    2 => socket.send_with_str(r#"{"Action": "Back" }"#),
+                    0 => socket.send_with_str(&serde_json::to_string_pretty(
+                            &protocol::Action::Play(
+                                protocol::Location {
+                                    alphabet: location.0,
+                                    digit: location.1,
+                                }
+                            )
+                        ).unwrap()),
+                    2 => socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::Back).unwrap()),
                     _ => {Ok(())},
                 };
             }

@@ -1,13 +1,10 @@
-mod protocol;
-
-#[macro_use]
-extern crate serde_derive;
-
 use actix::{Actor, StreamHandler};
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
 use actix_web_actors::ws;
 
 use go_game_engine::{Location, GoGameEngine, ChessType};
+
+use tgoban_ws_protocol as protocol;
 
 const BOARD_SIZE: u8 = 19;
 
