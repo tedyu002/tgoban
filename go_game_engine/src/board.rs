@@ -7,7 +7,7 @@ pub struct Board<T: Copy> {
 
 impl<T: Copy> Board<T> {
     pub fn get(&self, location: &Location) -> T {
-        return self.board[location.x as usize][location.y as usize];
+        return self.board[location.alphabet as usize][location.digit as usize];
     }
 
     pub fn size(&self) -> u8 {
@@ -15,37 +15,37 @@ impl<T: Copy> Board<T> {
     }
 
     fn set(&mut self, location: &Location, t: T) {
-        self.board[location.x as usize][location.y as usize] = t;
+        self.board[location.alphabet as usize][location.digit as usize] = t;
     }
 
     fn neighbors(&self, location: &Location) -> Vec<Location>{
         let mut neighbors: Vec<Location> = Vec::new();
 
-        if location.x > 0 {
+        if location.alphabet > 0 {
             neighbors.push(Location {
-                x: location.x - 1,
-                y: location.y,
+                alphabet: location.alphabet - 1,
+                digit: location.digit,
             });
         }
 
-        if location.x < self.size - 1 {
+        if location.alphabet < self.size - 1 {
             neighbors.push(Location {
-                x: location.x + 1,
-                y: location.y,
+                alphabet: location.alphabet + 1,
+                digit: location.digit,
             });
         }
 
-        if location.y > 0 {
+        if location.digit > 0 {
             neighbors.push(Location {
-                x: location.x ,
-                y: location.y - 1,
+                alphabet: location.alphabet ,
+                digit: location.digit - 1,
             });
         }
 
-        if location.y < self.size - 1 {
+        if location.digit < self.size - 1 {
             neighbors.push(Location {
-                x: location.x,
-                y: location.y + 1,
+                alphabet: location.alphabet,
+                digit: location.digit + 1,
             });
         }
 
@@ -63,23 +63,23 @@ pub enum ChessType {
 
 #[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 pub struct Location {
-    pub x: u8,
-    pub y: u8,
+    pub alphabet: u8,
+    pub digit: u8,
 }
 
 impl Location {
     pub fn new() -> Location {
         Location {
-            x: 0,
-            y: 0,
+            alphabet: 0,
+            digit: 0,
         }
     }
 
     fn set(&mut self, idx: u8, val:u8) {
         if idx == 0 {
-            self.x = val;
+            self.alphabet = val;
         } else if idx == 1 {
-            self.y = val;
+            self.digit = val;
         } else {
             panic!("Out of range");
         }
@@ -101,16 +101,37 @@ impl std::str::FromStr for Location {
         } else {
             let mut location = Location::new();
 
-            for idx in 0..2 {
-                match fields[idx].parse::<isize>() {
-                    Ok(num) => {
-                        location.set(idx as u8, num as u8);
-                    },
-                    Err(_) => {
-                        return Err(ParseTwoIntError {});
-                    }
-                };
+            if fields.len() != 2 {
+                return Err(ParseTwoIntError{});
             }
+
+            let alphabet_idx = match fields[0].parse::<char>() {
+                Ok(alphabet) => {
+                    match alphabet {
+                        'A'..='Z' if alphabet != 'I' => {
+                            alphabet as u8 - 'A' as u8
+                        },
+                        _ => {
+                            return Err(ParseTwoIntError {});
+                        }
+                    }
+                },
+                Err(_) => {
+                    return Err(ParseTwoIntError {});
+                }
+            };
+
+            let digit_idx = match fields[1].parse::<u8>() {
+                Ok(digit) => {
+                    digit - 1
+                },
+                Err(_) => {
+                    return Err(ParseTwoIntError {});
+                }
+            };
+
+            location.set(0, alphabet_idx);
+            location.set(1, digit_idx);
 
             return Ok(location)
         }
@@ -135,8 +156,8 @@ impl ChessChange {
             at: Chess {
                 chess_type: ChessType::None,
                 location: Location {
-                    x: 0,
-                    y: 0,
+                    alphabet: 0,
+                    digit: 0,
                 }
             },
             remove: Vec::new(),
@@ -223,10 +244,10 @@ impl GoBoard {
             },
         };
 
-        self.board[chess_change.at.location.x as usize][chess_change.at.location.y as usize] = ChessType::None;
+        self.board[chess_change.at.location.alphabet as usize][chess_change.at.location.digit as usize] = ChessType::None;
 
         for location in chess_change.remove.iter() {
-            self.board[location.x as usize][location.y as usize] = back_chess_type;
+            self.board[location.alphabet as usize][location.digit as usize] = back_chess_type;
         }
     }
 }
@@ -236,8 +257,8 @@ impl std::fmt::Display for GoBoard {
         for i in 0..self.size {
             for j in 0..self.size {
                 let location = Location {
-                    x: j,
-                    y: self.size - i - 1,
+                    alphabet: j,
+                    digit: self.size - i - 1,
                 };
 
                 let character = match self.get(&location) {
@@ -277,8 +298,8 @@ impl GoBoardLiberty {
         for idx1 in 0..board.size {
             for idx2 in 0..board.size {
                 let location = Location {
-                    x: idx1,
-                    y: idx2,
+                    alphabet: idx1,
+                    digit: idx2,
                 };
                 match board.get(&location) {
                     ChessType::Black => {
@@ -311,8 +332,8 @@ impl GoBoardLiberty {
         for idx1 in 0..board.size {
             for idx2 in 0..board.size {
                 let location = Location {
-                    x: idx1,
-                    y: idx2,
+                    alphabet: idx1,
+                    digit: idx2,
                 };
                 if board.get(&location) == ChessType::None {
                     let mut spread_start: Vec<Location> = Vec::new();

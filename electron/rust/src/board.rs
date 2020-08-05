@@ -144,9 +144,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                         element.remove();
                     }
 
-                    for x in 0..(BOARD_SIZE as i32) {
-                        for y in 0..(BOARD_SIZE as i32) {
-                            let chess = board[(x * (BOARD_SIZE as i32) + y) as usize];
+                    for alphabet in 0..(BOARD_SIZE as i32) {
+                        for digit in 0..(BOARD_SIZE as i32) {
+                            let chess = board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
 
                             let color = match chess {
                                 'B' => "black",
@@ -156,8 +156,8 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                             let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
 
-                            circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + y * CHESS_SIZE));
-                            circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - x - 1) * CHESS_SIZE));
+                            circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE));
+                            circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE));
 
                             circle.set_attribute("stroke", &color);
                             circle.set_attribute("fill", &color);
@@ -187,7 +187,7 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
             let rect = canvas_c.get_bounding_client_rect();
 
             if let Some(location) = convert_location((rect.width(), rect.height()), (mouse_event.offset_x(), mouse_event.offset_y())) {
-                socket.send_with_str(&format!(r#"{{"Action": "Play", "content": {{"x": {}, "y":{} }} }}"#, location.0, location.1));
+                socket.send_with_str(&format!(r#"{{"Action": "Play", "content": {{"alphabet": {}, "digit":{} }} }}"#, location.0, location.1));
             }
         }) as Box<dyn FnMut(_)>);
         canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;

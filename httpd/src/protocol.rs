@@ -2,8 +2,8 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Serialize)]
 pub struct Location {
-  pub x: u8,
-  pub y: u8,
+  pub alphabet: u8,
+  pub digit: u8,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -25,7 +25,7 @@ mod test {
 
     #[test]
     pub fn test_value() {
-        println!("{:#?}", serde_json::to_string_pretty(&Action::Play(Location{x: 5, y: 5})).unwrap());
+        println!("{:#?}", serde_json::to_string_pretty(&Action::Play(Location{alphabet: 5, digit: 5})).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Action::Back).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Command::Set(vec!['1','2','3','4','5'])).unwrap());
     }

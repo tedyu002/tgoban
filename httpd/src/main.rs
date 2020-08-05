@@ -34,8 +34,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                         let mut board: Vec<char> = Vec::new();
 
                         match self.go_game.make_move(Location {
-                            x: location.x,
-                            y: location.y,
+                            alphabet: location.alphabet,
+                            digit: location.digit,
                         }) {
                             Ok(_chess_change) => {},
                             Err(_) => {return;},
@@ -44,8 +44,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                         for x in 0..BOARD_SIZE {
                             for y in 0..BOARD_SIZE {
                                 let chess = match self.go_game.get_chess(Location {
-                                    x,
-                                    y,
+                                    alphabet: x,
+                                    digit: y,
                                 }) {
                                     ChessType::Black => 'B',
                                     ChessType::White => 'W',

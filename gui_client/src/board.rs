@@ -104,8 +104,8 @@ impl BoardWidget {
     pub fn new() -> BoardWidget {
         BoardWidget {
             down_location: Location {
-                x: 0,
-                y: 0,
+                alphabet: 0,
+                digit: 0,
             }
         }
     }
@@ -121,25 +121,25 @@ impl BoardWidget {
             .build()
             .unwrap();
 
-        for row in 1..=game_size {
+        for digit in 1..=game_size {
             let font_layout = ctx
                 .text()
-                .new_text_layout(&font, &format!("{}", game_size - (row - 1)), std::f64::INFINITY)
+                .new_text_layout(&font, &format!("{}", game_size - (digit - 1)), std::f64::INFINITY)
                 .build()
                 .unwrap();
 
-            let font_y = chess_size * row as f64 + chess_cen * 1.5;
+            let font_y = chess_size * digit as f64 + chess_cen * 1.5;
 
             ctx.draw_text(&font_layout, (chess_cen, font_y), &Color::BLACK);
 
             let line = Line::new(
                 Point{
                     x: chess_size + chess_cen,
-                    y: chess_size * row as f64 + chess_cen,
+                    y: chess_size * digit as f64 + chess_cen,
                 },
                 Point{
                     x: board_size - chess_size - chess_cen,
-                    y: chess_size * row as f64 + chess_cen,
+                    y: chess_size * digit as f64 + chess_cen,
                 },
             );
             ctx.stroke(line, &Color::BLACK, 1.0);
@@ -147,8 +147,12 @@ impl BoardWidget {
             ctx.draw_text(&font_layout, (board_size - chess_size, font_y), &Color::BLACK);
         }
 
-        for col in 1..=game_size {
-            let alphabet = ('A' as u8 + (col - 1)) as char;
+        for alphabet_idx in 1..=game_size {
+            let mut alphabet = ('A' as u8 + (alphabet_idx - 1)) as char;
+
+            if alphabet as u8 >= 'I' as u8 {
+                alphabet = (alphabet as u8 + 1) as char;
+            }
 
             let font_layout = ctx
                 .text()
@@ -156,17 +160,17 @@ impl BoardWidget {
                 .build()
                 .unwrap();
 
-            let font_x = chess_size * col as f64 + chess_cen * 0.75;
+            let font_x = chess_size * alphabet_idx as f64 + chess_cen * 0.75;
 
             ctx.draw_text(&font_layout, (font_x, chess_size), &Color::BLACK);
 
             let line = Line::new(
                 Point{
-                    x: chess_size * col as f64 + chess_cen,
+                    x: chess_size * alphabet_idx as f64 + chess_cen,
                     y: chess_size + chess_cen,
                 },
                 Point{
-                    x: chess_size * col as f64 + chess_cen,
+                    x: chess_size * alphabet_idx as f64 + chess_cen,
                     y: board_size - chess_size - chess_cen,
                 },
             );
@@ -199,8 +203,8 @@ impl BoardWidget {
         for row in 0..game_size {
             for col in 0..game_size {
                 let location = Location {
-                    x: col,
-                    y: row,
+                    alphabet: col,
+                    digit: row,
                 };
 
                 let color = match data.game.borrow().get_chess(location) {
@@ -266,8 +270,8 @@ impl BoardWidget {
         }
 
         return Ok(Location {
-            x: possible_location.0,
-            y: game_size - 1 - possible_location.1,
+            alphabet: possible_location.0,
+            digit: game_size - 1 - possible_location.1,
         });
     }
 }

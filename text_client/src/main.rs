@@ -22,7 +22,7 @@ fn main() {
             },
         };
 
-        println!("Location: {} {}", location.x, location.y);
+        println!("Location: {} {}", location.alphabet, location.digit);
 
         match game.make_move(location) {
             Ok(()) => {
@@ -30,10 +30,10 @@ fn main() {
             Err(err) => {
                 match err {
                     MoveError::Exist(location) => {
-                        println!("Cannot be placed at {} {} since exist.", location.x, location.y);
+                        println!("Cannot be placed at {} {} since exist.", location.alphabet, location.digit);
                     },
                     MoveError::NoLiberty(location) => {
-                        println!("Cannot be placed at {} {} since no liberty", location.x, location.y);
+                        println!("Cannot be placed at {} {} since no liberty", location.alphabet, location.digit);
                     },
                     MoveError::NoMove => {
                         println!("No chess");
