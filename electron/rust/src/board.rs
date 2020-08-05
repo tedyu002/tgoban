@@ -187,7 +187,11 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
             let rect = canvas_c.get_bounding_client_rect();
 
             if let Some(location) = convert_location((rect.width(), rect.height()), (mouse_event.offset_x(), mouse_event.offset_y())) {
-                socket.send_with_str(&format!(r#"{{"Action": "Play", "content": {{"alphabet": {}, "digit":{} }} }}"#, location.0, location.1));
+                match mouse_event.button() {
+                    0 => socket.send_with_str(&format!(r#"{{"Action": "Play", "content": {{"alphabet": {}, "digit":{} }} }}"#, location.0, location.1)),
+                    2 => socket.send_with_str(r#"{"Action": "Back" }"#),
+                    _ => {Ok(())},
+                };
             }
         }) as Box<dyn FnMut(_)>);
         canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;

@@ -12,7 +12,7 @@ use go_game_engine::{Location, GoGameEngine, ChessType};
 const BOARD_SIZE: u8 = 19;
 
 struct GoGame {
-    go_game: GoGameEngine,    
+    go_game: GoGameEngine,
 }
 
 impl Actor for GoGame {
@@ -27,12 +27,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
     ) {
         if let Ok(ws::Message::Text(text)) = msg {
             let action: Result<protocol::Action, _> = serde_json::from_str(&text);
-            
+
             if let Ok(action) = action {
                 match action {
                     protocol::Action::Play(location) => {
-                        let mut board: Vec<char> = Vec::new();
-
                         match self.go_game.make_move(Location {
                             alphabet: location.alphabet,
                             digit: location.digit,
@@ -40,31 +38,33 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                             Ok(_chess_change) => {},
                             Err(_) => {return;},
                         }
-
-                        for x in 0..BOARD_SIZE {
-                            for y in 0..BOARD_SIZE {
-                                let chess = match self.go_game.get_chess(Location {
-                                    alphabet: x,
-                                    digit: y,
-                                }) {
-                                    ChessType::Black => 'B',
-                                    ChessType::White => 'W',
-                                    ChessType::None => '0',
-                                };
-
-                                board.push(chess);
-                            }
-                        }
-
-                        let command = protocol::Command::Set(board);
-
-                        ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     },
                     protocol::Action::Back => {
+                        self.go_game.regret();
+                    }
+                };
+
+                let mut board: Vec<char> = Vec::new();
+                for x in 0..BOARD_SIZE {
+                    for y in 0..BOARD_SIZE {
+                        let chess = match self.go_game.get_chess(Location {
+                            alphabet: x,
+                            digit: y,
+                        }) {
+                            ChessType::Black => 'B',
+                            ChessType::White => 'W',
+                            ChessType::None => '0',
+                        };
+
+                        board.push(chess);
                     }
                 }
+
+                let command = protocol::Command::Set(board);
+
+                ctx.text(serde_json::to_string_pretty(&command).unwrap());
+
             }
-            
         } else if let Ok(ws::Message::Ping(msg)) = msg {
             ctx.pong(&msg);
         }
