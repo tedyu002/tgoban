@@ -120,49 +120,71 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
             if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
                 let raw: Vec<u16> = txt.iter().collect();
                 let txt = String::from_utf16(&raw).unwrap();
-//TODO                web_sys::window().unwrap().alert_with_message(&txt);
     
-                let command: Result<protocol::Command, _> = serde_json::from_str(&txt);
+                let command_parse: Result<protocol::Command, _> = serde_json::from_str(&txt);
 
-                if let Ok(protocol::Command::Set(board)) = command {
-                    let children = canvas.children();
+                match command_parse {
+                    Ok(command) => {
+                        match command {
+                            protocol::Command::Set(board) => {
+                                let children = canvas.children();
 
-                    let mut circles: Vec<Element> = Vec::new();
-                    for i in 0..children.length() {
-                        let child = children.get_with_index(i).unwrap();
+                                let mut circles: Vec<Element> = Vec::new();
+                                for i in 0..children.length() {
+                                    let child = children.get_with_index(i).unwrap();
 
-                        if child.tag_name() == "circle" {
-                            circles.push(child);
+                                    if child.tag_name() == "circle" {
+                                        circles.push(child);
+                                    }
+                                }
+
+                                for element in circles.iter() {
+                                    element.remove();
+                                }
+
+                                for alphabet in 0..(BOARD_SIZE as i32) {
+                                    for digit in 0..(BOARD_SIZE as i32) {
+                                        let chess = board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+
+                                        let color = match chess {
+                                            'B' => "black",
+                                            'W' => "white",
+                                            _ => continue,
+                                        };
+
+                                        let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
+
+                                        circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE));
+                                        circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE));
+
+                                        circle.set_attribute("stroke", &color);
+                                        circle.set_attribute("fill", &color);
+
+                                        circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
+
+                                        canvas.append_child(&circle);
+                                    }
+                                }
+                            },
+                            protocol::Command::SetGameInfo(game_info) => {
+                                let now_playing = document.get_element_by_id("now_playing").unwrap();
+                                let black_dead = document.get_element_by_id("black_dead").unwrap();
+                                let white_dead = document.get_element_by_id("white_dead").unwrap();
+
+                                now_playing.set_inner_html(match game_info.playing {
+                                    'B' => "Black",
+                                    'W' => "White",
+                                    _ => {return;}
+                                });
+
+                                black_dead.set_inner_html(&game_info.deads[0].to_string());
+                                white_dead.set_inner_html(&game_info.deads[1].to_string());
+                            },
                         }
                     }
-
-                    for element in circles.iter() {
-                        element.remove();
-                    }
-
-                    for alphabet in 0..(BOARD_SIZE as i32) {
-                        for digit in 0..(BOARD_SIZE as i32) {
-                            let chess = board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
-
-                            let color = match chess {
-                                'B' => "black",
-                                'W' => "white",
-                                _ => continue,
-                            };
-
-                            let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
-
-                            circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE));
-                            circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE));
-
-                            circle.set_attribute("stroke", &color);
-                            circle.set_attribute("fill", &color);
-
-                            circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
-
-                            canvas.append_child(&circle);
-                        }
-                    }
+                    Err(_) => {
+                        web_sys::window().unwrap().alert_with_message(&txt);
+                    },
                 }
             }
         }) as Box<dyn FnMut(MessageEvent)>);

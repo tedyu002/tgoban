@@ -10,6 +10,12 @@ pub struct Location {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct GameInfo {
+    pub playing: char,
+    pub deads: [i32; 2],
+}
+
+#[derive(Deserialize, Serialize)]
 #[serde(tag="Action", content="content")]
 pub enum Action {
     Play(Location),
@@ -20,6 +26,7 @@ pub enum Action {
 #[serde(tag="Command", content="content")]
 pub enum Command {
     Set(Vec<char>),
+    SetGameInfo(GameInfo),
 }
 
 #[cfg(test)]
@@ -31,5 +38,6 @@ mod test {
         println!("{:#?}", serde_json::to_string_pretty(&Action::Play(Location{alphabet: 5, digit: 5})).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Action::Back).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Command::Set(vec!['1','2','3','4','5'])).unwrap());
+        println!("{:#?}", serde_json::to_string_pretty(&Command::SetGameInfo(GameInfo {playing: 'B', deads: [1, 3]})).unwrap());
     }
 }

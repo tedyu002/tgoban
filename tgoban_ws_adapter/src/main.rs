@@ -2,7 +2,7 @@ use actix::{Actor, StreamHandler};
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
 use actix_web_actors::ws;
 
-use go_game_engine::{Location, GoGameEngine, ChessType};
+use go_game_engine::{Location, GoGameEngine, ChessType, Player};
 
 use tgoban_ws_protocol as protocol;
 
@@ -60,11 +60,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                 let command = protocol::Command::Set(board);
 
                 ctx.text(serde_json::to_string_pretty(&command).unwrap());
-
             }
         } else if let Ok(ws::Message::Ping(msg)) = msg {
             ctx.pong(&msg);
         }
+        ctx.text(serde_json::to_string_pretty(&protocol::Command::SetGameInfo(protocol::GameInfo {
+            playing: match self.go_game.player() {
+                Player::Black => 'B',
+                Player::White => 'W',
+            },
+            deads: [self.go_game.deads(&Player::Black), self.go_game.deads(&Player::White)],
+        })).unwrap());
     }
 }
 
