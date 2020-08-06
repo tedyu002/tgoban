@@ -19,6 +19,7 @@ pub struct GameInfo {
 #[derive(Deserialize, Serialize)]
 #[serde(tag="Action", content="content")]
 pub enum Action {
+    Refresh,
     Play(Location),
     Back,
 }

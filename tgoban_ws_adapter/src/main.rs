@@ -38,7 +38,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                     },
                     protocol::Action::Back => {
                         self.go_game.regret();
-                    }
+                    },
+                    protocol::Action::Refresh => {
+                        /* Do nothing */
+                    },
                 };
 
                 let mut board: Vec<char> = Vec::new();

@@ -195,6 +195,15 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
         onmessage_callback.forget();
     }
 
+    {
+        let socket = ws.clone();
+        let onopen_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
+            socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::Refresh).unwrap());
+        }) as Box<dyn FnMut(_)>);
+        ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
+        onopen_callback.forget();
+    }
+
     Ok(ws)
 }
 
