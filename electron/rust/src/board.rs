@@ -16,14 +16,17 @@ const FONT_SIZE: i32 = CHESS_SIZE / 2;
 
 pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
     let document = web_sys::window().unwrap().document().unwrap();
- 
+
+    let board_group = document.create_element_ns(Some(SVG_NS), "g")?;
+    canvas.append_child(&board_group);
+
     let rect = document.create_element_ns(Some(SVG_NS), "rect")?;
 
     rect.set_attribute("width", &format!("{}", CANVAS_SIZE))?;
     rect.set_attribute("height", &format!("{}", CANVAS_SIZE))?;
     rect.set_attribute("fill", "#a57402")?;
 
-    canvas.append_child(&rect)?;
+    board_group.append_child(&rect)?;
 
     for row in 0..(BOARD_SIZE as i32) {
         let line = document.create_element_ns(Some(SVG_NS), "line")?;
@@ -34,7 +37,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
         line.set_attribute("y2", &format!("{}", LINE_END))?;
         line.set_attribute("stroke", "black")?;
 
-        canvas.append_child(&line)?;
+        board_group.append_child(&line)?;
     }
 
     for col in 0..(BOARD_SIZE as i32) {
@@ -46,7 +49,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
         line.set_attribute("y2", &format!("{}", LINE_START + CHESS_SIZE * col))?;
         line.set_attribute("stroke", "black")?;
 
-        canvas.append_child(&line)?;
+        board_group.append_child(&line)?;
     }
 
     for row in 0..(BOARD_SIZE as i32) {
@@ -59,7 +62,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
             text.set_attribute("x", &format!("{}", x))?;
             text.set_attribute("y", &format!("{}", FONT_SIZE))?;
             text.set_attribute("font-size", &format!("{}", FONT_SIZE))?;
-            canvas.append_child(&text)?;
+            board_group.append_child(&text)?;
         }
         {
             let text = document.create_element_ns(Some(SVG_NS), "text")?;
@@ -68,7 +71,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
             text.set_attribute("x", &format!("{}", x))?;
             text.set_attribute("y", &format!("{}", CANVAS_SIZE))?;
             text.set_attribute("font-size", &format!("{}", FONT_SIZE))?;
-            canvas.append_child(&text)?;
+            board_group.append_child(&text)?;
         }
     }
 
@@ -82,7 +85,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
             text.set_attribute("x", &format!("{}", CHESS_SIZE / 4))?;
             text.set_attribute("y", &format!("{}", y))?;
             text.set_attribute("font-size", &format!("{}", FONT_SIZE))?;
-            canvas.append_child(&text)?;
+            board_group.append_child(&text)?;
         }
         {
             let text = document.create_element_ns(Some(SVG_NS), "text")?;
@@ -91,7 +94,24 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
             text.set_attribute("x", &format!("{}", LINE_END + CHESS_SIZE - CHESS_SIZE / 2))?;
             text.set_attribute("y", &format!("{}", y))?;
             text.set_attribute("font-size", &format!("{}", FONT_SIZE))?;
-            canvas.append_child(&text)?;
+            board_group.append_child(&text)?;
+        }
+    }
+
+    let stars = [3, 9, 15];
+    for digit in stars.iter() {
+        for alphabet in stars.iter() {
+            let circle = document.create_element_ns(Some(SVG_NS), "circle")?;
+
+            circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE))?;
+            circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE))?;
+
+            circle.set_attribute("stroke", "black")?;
+            circle.set_attribute("fill", "black")?;
+
+            circle.set_attribute("r", &format!("{}", CHESS_SIZE / 10))?;
+
+            board_group.append_child(&circle)?;
         }
     }
 
