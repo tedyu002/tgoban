@@ -132,6 +132,15 @@ impl GoGameEngine {
         return deads;
     }
 
+    pub fn steps(&self) -> i32 {
+        let mut steps: i32 = 0;
+        self.tree.access_head(|head| {
+            steps = head.steps;
+        });
+
+        return steps;
+    }
+
     pub fn regret(&mut self) {
         let mut chess_change: Option<ChessChange> = None;
 

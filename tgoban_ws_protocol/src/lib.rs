@@ -11,6 +11,7 @@ pub struct Location {
 
 #[derive(Deserialize, Serialize)]
 pub struct GameInfo {
+    pub steps: i32,
     pub playing: char,
     pub deads: [i32; 2],
 }

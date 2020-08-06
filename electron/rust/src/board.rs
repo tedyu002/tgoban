@@ -167,10 +167,12 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 }
                             },
                             protocol::Command::SetGameInfo(game_info) => {
+                                let steps = document.get_element_by_id("steps").unwrap();
                                 let now_playing = document.get_element_by_id("now_playing").unwrap();
                                 let black_dead = document.get_element_by_id("black_dead").unwrap();
                                 let white_dead = document.get_element_by_id("white_dead").unwrap();
 
+                                steps.set_inner_html(&game_info.steps.to_string());
                                 now_playing.set_inner_html(match game_info.playing {
                                     'B' => "Black",
                                     'W' => "White",

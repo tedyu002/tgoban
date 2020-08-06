@@ -65,6 +65,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
             ctx.pong(&msg);
         }
         ctx.text(serde_json::to_string_pretty(&protocol::Command::SetGameInfo(protocol::GameInfo {
+            steps: self.go_game.steps(),
             playing: match self.go_game.player() {
                 Player::Black => 'B',
                 Player::White => 'W',
