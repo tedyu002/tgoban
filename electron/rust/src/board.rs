@@ -53,7 +53,11 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
     }
 
     for row in 0..(BOARD_SIZE as i32) {
-        let alphabet = ('A' as u8 + row as u8) as char;
+        let mut alphabet = ('A' as u8 + row as u8) as char;
+        if alphabet as u8 >= 'I' as u8 {
+            alphabet = (alphabet as u8 + 1) as char;
+        }
+
         let x = LINE_START - CHESS_SIZE / 2 + CHESS_SIZE / 4 + CHESS_SIZE * row;
         {
             let text = document.create_element_ns(Some(SVG_NS), "text")?;
