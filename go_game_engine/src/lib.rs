@@ -22,6 +22,11 @@ impl Player {
     }
 }
 
+pub enum GameStatus {
+    Playing,
+    Scoring,
+}
+
 pub struct GoNode {
     changes: Option<ChessChange>,
     steps: i32,
@@ -32,6 +37,7 @@ pub struct GoNode {
 pub struct GoGameEngine {
     board: GoBoard,
     tree: Tree<GoNode>,
+    status: GameStatus,
 }
 
 impl GoGameEngine {
@@ -45,6 +51,7 @@ impl GoGameEngine {
         GoGameEngine {
             tree: Tree::new(root_node),
             board: GoBoard::new(size),
+            status: GameStatus::Playing,
         }
     }
 
@@ -53,6 +60,11 @@ impl GoGameEngine {
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
+        match self.status {
+            GameStatus::Playing => {},
+            _ => return Ok(()),
+        };
+
         let mut chess_type = ChessType::None;
 
         self.tree.access_head(|head| {
@@ -96,6 +108,26 @@ impl GoGameEngine {
     }
 
     pub fn pass(&mut self) {
+        match self.status {
+            GameStatus::Playing => {},
+            _ => return,
+        };
+
+        let mut status: Option<GameStatus> = None;
+        self.tree.access_head(|head| {
+            if let None = head.changes {
+                status = Some(GameStatus::Scoring);
+            }
+        });
+
+        match status {
+            None => {},
+            Some(game_status) => {
+                self.status = game_status;
+                return;
+            }
+        };
+
         self.tree.grow(|head_data| {
             GoNode {
                 changes: None,

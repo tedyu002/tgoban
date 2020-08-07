@@ -232,7 +232,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 }
 
 pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
-    {
+    let document = web_sys::window().unwrap().document().unwrap();
+
+    { // Board click
         let canvas_c = canvas.clone();
         let socket = socket.clone();
 
@@ -255,6 +257,16 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
             }
         }) as Box<dyn FnMut(_)>);
         canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+        closure.forget();
+    }
+
+    { // Pass Button
+        let socket = socket.clone();
+        let button = document.get_element_by_id("pass").unwrap().clone();
+        let closure = Closure::wrap(Box::new(move |mouse_event: web_sys::MouseEvent| {
+            socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::Pass).unwrap());
+        }) as Box<dyn FnMut(_)>);
+        button.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
 

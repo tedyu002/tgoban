@@ -22,6 +22,7 @@ pub enum Action {
     Refresh,
     Play(Location),
     Back,
+    Pass,
 }
 
 #[derive(Deserialize, Serialize)]

@@ -39,6 +39,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                     protocol::Action::Back => {
                         self.go_game.regret();
                     },
+                    protocol::Action::Pass => {
+                        self.go_game.pass();
+                    },
                     protocol::Action::Refresh => {
                         /* Do nothing */
                     },
