@@ -140,11 +140,11 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
         let canvas = canvas.clone();
         let onmessage_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
             let document = web_sys::window().unwrap().document().unwrap();
- 
+
             if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
                 let raw: Vec<u16> = txt.iter().collect();
                 let txt = String::from_utf16(&raw).unwrap();
-    
+
                 let command_parse: Result<protocol::Command, _> = serde_json::from_str(&txt);
 
                 match command_parse {
@@ -157,7 +157,7 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 for i in 0..children.length() {
                                     let child = children.get_with_index(i).unwrap();
 
-                                    if child.tag_name() == "circle" {
+                                    if child.tag_name() == "circle" || child.tag_name() == "rect" {
                                         circles.push(child);
                                     }
                                 }
@@ -171,8 +171,8 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                         let chess = board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
 
                                         let color = match chess {
-                                            'B' => "black",
-                                            'W' => "white",
+                                            'B' | 'b' => "black",
+                                            'W' | 'w' => "white",
                                             _ => continue,
                                         };
 
@@ -186,7 +186,39 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                                         circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
 
+                                        if chess.is_lowercase() {
+                                            circle.set_attribute("opacity", "0.5");
+                                        }
+
                                         canvas.append_child(&circle);
+                                    }
+                                }
+                            },
+                            protocol::Command::SetBelong(belong_board) => {
+                                for alphabet in 0..(BOARD_SIZE as i32) {
+                                    for digit in 0..(BOARD_SIZE as i32) {
+                                        let belong = belong_board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+
+                                        let color = match belong {
+                                            'B' => "black",
+                                            'W' => "white",
+                                            _ => continue,
+                                        };
+
+                                        let rect = document.create_element_ns(Some(SVG_NS), "rect").unwrap();
+
+                                        let ratio = 2;
+                                        let offset = CHESS_SIZE * ratio / 10;
+                                        let size = CHESS_SIZE * (ratio * 2) / 10;
+
+                                        rect.set_attribute("x", &((CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE) - offset).to_string());
+                                        rect.set_attribute("y", &((CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE) - offset).to_string());
+                                        rect.set_attribute("width", &size.to_string());
+                                        rect.set_attribute("height", &size.to_string());
+
+                                        rect.set_attribute("fill", &color);
+
+                                        canvas.append_child(&rect);
                                     }
                                 }
                             },

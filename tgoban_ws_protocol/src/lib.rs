@@ -29,6 +29,7 @@ pub enum Action {
 #[serde(tag="Command", content="content")]
 pub enum Command {
     Set(Vec<char>),
+    SetBelong(Vec<char>),
     SetGameInfo(GameInfo),
 }
 

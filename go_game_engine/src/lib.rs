@@ -1,7 +1,9 @@
 mod tree;
 mod board;
+mod scoring_board;
 
 pub use crate::board::{GoBoard, ChessChange, MoveError, Location, ChessType};
+use crate::scoring_board::ScoreBoard;
 use crate::tree::{Tree};
 
 
@@ -22,6 +24,7 @@ impl Player {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum GameStatus {
     Playing,
     Scoring,
@@ -38,6 +41,7 @@ pub struct GoGameEngine {
     board: GoBoard,
     tree: Tree<GoNode>,
     status: GameStatus,
+    score_board: Option<ScoreBoard>,
 }
 
 impl GoGameEngine {
@@ -52,6 +56,7 @@ impl GoGameEngine {
             tree: Tree::new(root_node),
             board: GoBoard::new(size),
             status: GameStatus::Playing,
+            score_board: None,
         }
     }
 
@@ -107,6 +112,15 @@ impl GoGameEngine {
         return self.board.get(&location);
     }
 
+    pub fn get_belong(&self, location: Location) -> Option<Player> {
+        match self.status {
+            GameStatus::Scoring => {},
+            _ => return None,
+        };
+
+        return self.score_board.as_ref().unwrap().get_belong(location);
+    }
+
     pub fn pass(&mut self) {
         match self.status {
             GameStatus::Playing => {},
@@ -124,6 +138,8 @@ impl GoGameEngine {
             None => {},
             Some(game_status) => {
                 self.status = game_status;
+                self.score_board = Some(ScoreBoard::new(&self.board));
+                self.score_board.as_mut().unwrap().refresh_belong(&self.board);
                 return;
             }
         };
@@ -183,6 +199,33 @@ impl GoGameEngine {
         if let Some(chess_change) = chess_change {
             self.board.reverse_change(&chess_change);
         }
+    }
+
+    pub fn get_status(&self) -> GameStatus {
+        return self.status;
+    }
+
+    pub fn toggle(&mut self, location: Location) {
+        if self.status != GameStatus::Scoring {
+            return;
+        }
+
+        match self.board.get(&location) {
+            ChessType::None => return,
+            ChessType::Black | ChessType::White => {
+                let score_board = self.score_board.as_mut().unwrap();
+
+                score_board.toggle(&self.board, location);
+                score_board.refresh_belong(&self.board);
+            }
+        };
+    }
+
+    pub fn is_alive(&self, location: Location) -> bool {
+        if self.status != GameStatus::Scoring {
+            return false;
+        }
+        return self.score_board.as_ref().unwrap().is_alive(location);
     }
 }
 

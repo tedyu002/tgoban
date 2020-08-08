@@ -1,8 +1,8 @@
-const BOARD_SIZE_MAX: usize = 19;
+pub const BOARD_SIZE_MAX: usize = 19;
 
 pub struct Board<T: Copy> {
-    size: u8,
-    board: [[T; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
+    pub size: u8,
+    pub board: [[T; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
 }
 
 impl<T: Copy> Board<T> {
@@ -14,11 +14,11 @@ impl<T: Copy> Board<T> {
         return self.size;
     }
 
-    fn set(&mut self, location: &Location, t: T) {
+    pub fn set(&mut self, location: &Location, t: T) {
         self.board[location.alphabet as usize][location.digit as usize] = t;
     }
 
-    fn neighbors(&self, location: &Location) -> Vec<Location>{
+    pub fn neighbors(&self, location: &Location) -> Vec<Location>{
         let mut neighbors: Vec<Location> = Vec::new();
 
         if location.alphabet > 0 {

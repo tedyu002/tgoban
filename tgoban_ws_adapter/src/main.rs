@@ -2,7 +2,7 @@ use actix::{Actor, StreamHandler};
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer, Result};
 use actix_web_actors::ws;
 
-use go_game_engine::{Location, GoGameEngine, ChessType, Player};
+use go_game_engine::{Location, GoGameEngine, ChessType, Player, GameStatus};
 
 use tgoban_ws_protocol as protocol;
 
@@ -26,46 +26,87 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
             let action: Result<protocol::Action, _> = serde_json::from_str(&text);
 
             if let Ok(action) = action {
+                let mut draw_chess = true;
                 match action {
                     protocol::Action::Play(location) => {
-                        match self.go_game.make_move(Location {
+                        let location = Location {
                             alphabet: location.alphabet,
                             digit: location.digit,
-                        }) {
-                            Ok(_chess_change) => {},
-                            Err(_) => {return;},
-                        }
+                        };
+                        match self.go_game.get_status() {
+                            GameStatus::Playing => {
+                                match self.go_game.make_move(location) {
+                                    Ok(_chess_change) => {},
+                                    Err(_) => {
+                                        draw_chess = false;
+                                    },
+                                };
+                            },
+                            GameStatus::Scoring => {
+                                self.go_game.toggle(location);
+                            },
+                        };
                     },
                     protocol::Action::Back => {
                         self.go_game.regret();
                     },
                     protocol::Action::Pass => {
                         self.go_game.pass();
+                        draw_chess = false;
                     },
                     protocol::Action::Refresh => {
                         /* Do nothing */
                     },
                 };
 
-                let mut board: Vec<char> = Vec::new();
-                for x in 0..BOARD_SIZE {
-                    for y in 0..BOARD_SIZE {
-                        let chess = match self.go_game.get_chess(Location {
-                            alphabet: x,
-                            digit: y,
-                        }) {
-                            ChessType::Black => 'B',
-                            ChessType::White => 'W',
-                            ChessType::None => '0',
-                        };
+                if draw_chess { /* Draw Chess */
+                    let mut board: Vec<char> = Vec::new();
+                    for x in 0..BOARD_SIZE {
+                        for y in 0..BOARD_SIZE {
+                            let location = Location {
+                                alphabet: x,
+                                digit: y,
+                            };
+                            let mut chess = match self.go_game.get_chess(location) {
+                                ChessType::Black => 'B',
+                                ChessType::White => 'W',
+                                ChessType::None => '0',
+                            };
 
-                        board.push(chess);
+                            if self.go_game.get_status() == GameStatus::Scoring && !self.go_game.is_alive(location) {
+                                chess = chess.to_lowercase().next().unwrap();
+                            }
+
+                            board.push(chess);
+                        }
                     }
+
+                    let command = protocol::Command::Set(board);
+                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 }
 
-                let command = protocol::Command::Set(board);
+                if self.go_game.get_status() == GameStatus::Scoring { /* Draw Belong */
+                    let mut belong_board: Vec<char> = Vec::new();
 
-                ctx.text(serde_json::to_string_pretty(&command).unwrap());
+                    for alphabet in 0..BOARD_SIZE {
+                        for digit in 0..BOARD_SIZE {
+                            belong_board.push(match self.go_game.get_belong(Location {
+                                alphabet,
+                                digit,
+                            }) {
+                                None => ' ',
+                                Some(player) => {
+                                    match player {
+                                        Player::Black => 'B',
+                                        Player::White => 'W',
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    let command = protocol::Command::SetBelong(belong_board);
+                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
+                }
             }
         } else if let Ok(ws::Message::Ping(msg)) = msg {
             ctx.pong(&msg);
