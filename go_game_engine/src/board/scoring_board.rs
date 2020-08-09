@@ -1,6 +1,6 @@
-use crate::board::BOARD_SIZE_MAX;
-use crate::board::{GoBoard, Location, ChessType};
-use crate::Player;
+use crate::{Player, Location};
+use crate::BOARD_SIZE_MAX;
+use crate::board::go_board::{GoBoard, ChessType};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 enum Live {
@@ -36,7 +36,7 @@ impl BelongBoard {
     }
 }
 
-pub struct ScoreBoard {
+pub(crate) struct ScoreBoard {
     size: u8,
     live_board: LiveBoard,
     belong_board: BelongBoard,

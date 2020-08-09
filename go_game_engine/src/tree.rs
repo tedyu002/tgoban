@@ -1,12 +1,12 @@
 use std::sync::{Arc, Weak, RwLock};
 
-pub struct Node<T> {
+pub(crate) struct Node<T> {
     pub data: T,
     pub parent: Option<Weak<RwLock<Node<T>>>>,
     pub children: Vec<Arc<RwLock<Node<T>>>>,
 }
 
-pub struct Tree<T> {
+pub(crate) struct Tree<T> {
     root: Arc<RwLock<Node<T>>>,
 
     /// The node to be grown, same as the git branch HEAD

@@ -1,141 +1,11 @@
-pub const BOARD_SIZE_MAX: usize = 19;
+use crate::{BOARD_SIZE_MAX, Location};
+use super::Board;
 
-pub struct Board<T: Copy> {
-    pub size: u8,
-    pub board: [[T; BOARD_SIZE_MAX]; BOARD_SIZE_MAX],
-}
-
-impl<T: Copy> Board<T> {
-    pub fn get(&self, location: &Location) -> T {
-        return self.board[location.alphabet as usize][location.digit as usize];
-    }
-
-    pub fn size(&self) -> u8 {
-        return self.size;
-    }
-
-    pub fn set(&mut self, location: &Location, t: T) {
-        self.board[location.alphabet as usize][location.digit as usize] = t;
-    }
-
-    pub fn neighbors(&self, location: &Location) -> Vec<Location>{
-        let mut neighbors: Vec<Location> = Vec::new();
-
-        if location.alphabet > 0 {
-            neighbors.push(Location {
-                alphabet: location.alphabet - 1,
-                digit: location.digit,
-            });
-        }
-
-        if location.alphabet < self.size - 1 {
-            neighbors.push(Location {
-                alphabet: location.alphabet + 1,
-                digit: location.digit,
-            });
-        }
-
-        if location.digit > 0 {
-            neighbors.push(Location {
-                alphabet: location.alphabet ,
-                digit: location.digit - 1,
-            });
-        }
-
-        if location.digit < self.size - 1 {
-            neighbors.push(Location {
-                alphabet: location.alphabet,
-                digit: location.digit + 1,
-            });
-        }
-
-        return neighbors;
-    }
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum ChessType {
     None,
     Black,
     White,
-}
-
-
-#[derive(PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub struct Location {
-    pub alphabet: u8,
-    pub digit: u8,
-}
-
-impl Location {
-    pub fn new() -> Location {
-        Location {
-            alphabet: 0,
-            digit: 0,
-        }
-    }
-
-    fn set(&mut self, idx: u8, val:u8) {
-        if idx == 0 {
-            self.alphabet = val;
-        } else if idx == 1 {
-            self.digit = val;
-        } else {
-            panic!("Out of range");
-        }
-    }
-}
-
-pub struct ParseTwoIntError {
-}
-
-impl std::str::FromStr for Location {
-    type Err = ParseTwoIntError;
-
-    fn from_str(line: &str) -> Result<Location, ParseTwoIntError> {
-        let fields: Vec<&str> = line.split(" ").filter(|s| s.len() > 0).collect();
-
-        if fields.len() != 2 {
-            return Err(ParseTwoIntError {
-            })
-        } else {
-            let mut location = Location::new();
-
-            if fields.len() != 2 {
-                return Err(ParseTwoIntError{});
-            }
-
-            let alphabet_idx = match fields[0].parse::<char>() {
-                Ok(alphabet) => {
-                    match alphabet {
-                        'A'..='Z' if alphabet != 'I' => {
-                            alphabet as u8 - 'A' as u8
-                        },
-                        _ => {
-                            return Err(ParseTwoIntError {});
-                        }
-                    }
-                },
-                Err(_) => {
-                    return Err(ParseTwoIntError {});
-                }
-            };
-
-            let digit_idx = match fields[1].parse::<u8>() {
-                Ok(digit) => {
-                    digit - 1
-                },
-                Err(_) => {
-                    return Err(ParseTwoIntError {});
-                }
-            };
-
-            location.set(0, alphabet_idx);
-            location.set(1, digit_idx);
-
-            return Ok(location)
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -379,10 +249,3 @@ impl GoBoardLiberty {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

@@ -1,13 +1,12 @@
 mod tree;
 mod board;
-mod scoring_board;
 
-pub use crate::board::{GoBoard, ChessChange, MoveError, Location, ChessType};
-use crate::scoring_board::ScoreBoard;
+pub use crate::board::go_board::{GoBoard, ChessChange, MoveError, ChessType};
+use crate::board::scoring_board::ScoreBoard;
 use crate::tree::{Tree};
 
-
-const PLAYER_NUM: usize = 2;
+pub const BOARD_SIZE_MAX: usize = 19;
+pub const PLAYER_NUM: usize = 2;
 
 #[derive(Copy, Clone)]
 pub enum Player {
@@ -22,6 +21,12 @@ impl Player {
             Player::White => Player::Black,
         }
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct Location {
+    pub alphabet: u8,
+    pub digit: u8,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -262,5 +267,55 @@ impl std::fmt::Display for GoGameEngine {
         });
 
         return res;
+    }
+}
+
+pub struct ParseTwoIntError {
+}
+
+impl std::str::FromStr for Location {
+    type Err = ParseTwoIntError;
+
+    fn from_str(line: &str) -> Result<Location, ParseTwoIntError> {
+        let fields: Vec<&str> = line.split(" ").filter(|s| s.len() > 0).collect();
+
+        if fields.len() != 2 {
+            return Err(ParseTwoIntError {
+            })
+        } else {
+            if fields.len() != 2 {
+                return Err(ParseTwoIntError{});
+            }
+
+            let alphabet_idx = match fields[0].parse::<char>() {
+                Ok(alphabet) => {
+                    match alphabet {
+                        'A'..='Z' if alphabet != 'I' => {
+                            alphabet as u8 - 'A' as u8
+                        },
+                        _ => {
+                            return Err(ParseTwoIntError {});
+                        }
+                    }
+                },
+                Err(_) => {
+                    return Err(ParseTwoIntError {});
+                }
+            };
+
+            let digit_idx = match fields[1].parse::<u8>() {
+                Ok(digit) => {
+                    digit - 1
+                },
+                Err(_) => {
+                    return Err(ParseTwoIntError {});
+                }
+            };
+
+            Ok(Location {
+                alphabet: alphabet_idx,
+                digit: digit_idx,
+            })
+        }
     }
 }
