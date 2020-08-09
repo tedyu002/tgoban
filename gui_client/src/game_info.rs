@@ -17,12 +17,12 @@ pub fn make_game_info_widget() -> Flex<DruidGoGame> {
 
     let black = Label::new("Black");
     let black_deads = Label::new(|data: &DruidGoGame, _env: &_| {
-        format!("{}", data.game.borrow().deads(&Player::Black))
+        format!("{}", data.game.borrow().get_capture(&Player::Black))
     });
 
     let white = Label::new("White");
     let white_deads = Label::new(|data: &DruidGoGame, _env: &_| {
-        format!("{}", data.game.borrow().deads(&Player::White))
+        format!("{}", data.game.borrow().get_capture(&Player::White))
     });
 
     Flex::column()
