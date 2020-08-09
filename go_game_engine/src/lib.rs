@@ -177,6 +177,10 @@ impl GoGameEngine {
             capture = head.capture[*player as usize];
         });
 
+        if self.status == GameStatus::Scoring {
+            capture += self.score_board.as_ref().unwrap().get_capture(&self.board, player);
+        }
+
         return capture;
     }
 

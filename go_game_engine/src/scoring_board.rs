@@ -182,4 +182,33 @@ impl ScoreBoard {
             _ => false,
         }
     }
+
+    pub fn get_capture(&self, go_board: &GoBoard, player: &Player) -> i32 {
+        let mut capture: (i32, i32) = (0, 0);
+        for alphabet in 0..self.size {
+            for digit in 0..self.size {
+                let location = Location {
+                    alphabet,
+                    digit,
+                };
+                if self.live_board.get(&location) == Live::Dead {
+                    let board_chess = go_board.get(&location);
+                    match go_board.get(&location) {
+                        ChessType::None => panic!("The dead could no be no chess"),
+                        ChessType::Black => {
+                            capture.1 += 1;
+                        },
+                        ChessType::White => {
+                            capture.0 += 1;
+                        }
+                    };
+                }
+            }
+        }
+
+        match player {
+            Player::Black => capture.0,
+            Player::White => capture.1,
+        }
+    }
 }

@@ -85,27 +85,44 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                     ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 }
 
-                if self.go_game.get_status() == GameStatus::Scoring { /* Draw Belong */
-                    let mut belong_board: Vec<char> = Vec::new();
+                if self.go_game.get_status() == GameStatus::Scoring {
+                    let mut score:(i32, i32) = (0, 0);
 
-                    for alphabet in 0..BOARD_SIZE {
-                        for digit in 0..BOARD_SIZE {
-                            belong_board.push(match self.go_game.get_belong(Location {
-                                alphabet,
-                                digit,
-                            }) {
-                                None => ' ',
-                                Some(player) => {
-                                    match player {
-                                        Player::Black => 'B',
-                                        Player::White => 'W',
+                    { /* Draw Belong */
+                        let mut belong_board: Vec<char> = Vec::new();
+
+                        for alphabet in 0..BOARD_SIZE {
+                            for digit in 0..BOARD_SIZE {
+                                belong_board.push(match self.go_game.get_belong(Location {
+                                    alphabet,
+                                    digit,
+                                }) {
+                                    None => ' ',
+                                    Some(player) => {
+                                        match player {
+                                            Player::Black => {
+                                                score.0 += 1;
+                                                'B'
+                                            },
+                                            Player::White => {
+                                                score.1 += 1;
+                                                'W'
+                                            },
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
+                        let command = protocol::Command::SetBelong(belong_board);
+                        ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     }
-                    let command = protocol::Command::SetBelong(belong_board);
-                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
+                    { /* Set Score info */
+                        score.0 -= self.go_game.get_capture(&Player::White);
+                        score.1 -= self.go_game.get_capture(&Player::Black);
+
+                        let command = protocol::Command::SetScoring(score);
+                        ctx.text(serde_json::to_string_pretty(&command).unwrap());
+                    }
                 }
             }
         } else if let Ok(ws::Message::Ping(msg)) = msg {

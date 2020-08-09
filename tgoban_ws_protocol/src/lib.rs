@@ -31,6 +31,7 @@ pub enum Command {
     Set(Vec<char>),
     SetBelong(Vec<char>),
     SetGameInfo(GameInfo),
+    SetScoring((i32, i32)),
 }
 
 #[cfg(test)]

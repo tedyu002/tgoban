@@ -238,6 +238,13 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 black_capture.set_inner_html(&game_info.capture[0].to_string());
                                 white_capture.set_inner_html(&game_info.capture[1].to_string());
                             },
+                            protocol::Command::SetScoring((black_score, white_score)) => {
+                                let black_score_disp = document.get_element_by_id("black_score").unwrap();
+                                let white_score_disp = document.get_element_by_id("white_score").unwrap();
+
+                                black_score_disp.set_inner_html(&black_score.to_string());
+                                white_score_disp.set_inner_html(&white_score.to_string());
+                            },
                         }
                     }
                     Err(_) => {
