@@ -13,7 +13,7 @@ pub struct Location {
 pub struct GameInfo {
     pub steps: i32,
     pub playing: char,
-    pub deads: [i32; 2],
+    pub capture: [i32; 2],
 }
 
 #[derive(Deserialize, Serialize)]
@@ -42,6 +42,6 @@ mod test {
         println!("{:#?}", serde_json::to_string_pretty(&Action::Play(Location{alphabet: 5, digit: 5})).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Action::Back).unwrap());
         println!("{:#?}", serde_json::to_string_pretty(&Command::Set(vec!['1','2','3','4','5'])).unwrap());
-        println!("{:#?}", serde_json::to_string_pretty(&Command::SetGameInfo(GameInfo {playing: 'B', deads: [1, 3]})).unwrap());
+        println!("{:#?}", serde_json::to_string_pretty(&Command::SetGameInfo(GameInfo {playing: 'B', capture: [1, 3]})).unwrap());
     }
 }

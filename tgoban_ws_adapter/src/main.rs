@@ -117,7 +117,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                 Player::Black => 'B',
                 Player::White => 'W',
             },
-            deads: [self.go_game.deads(&Player::Black), self.go_game.deads(&Player::White)],
+            capture: [self.go_game.get_capture(&Player::Black), self.go_game.get_capture(&Player::White)],
         })).unwrap());
     }
 }

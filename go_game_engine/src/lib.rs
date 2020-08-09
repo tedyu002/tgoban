@@ -33,7 +33,7 @@ pub enum GameStatus {
 pub struct GoNode {
     changes: Option<ChessChange>,
     steps: i32,
-    deads: [i32; PLAYER_NUM],
+    capture: [i32; PLAYER_NUM],
     player: Option<Player>,
 }
 
@@ -49,7 +49,7 @@ impl GoGameEngine {
         let root_node = GoNode {
             changes: None,
             steps: 0,
-            deads: [0; PLAYER_NUM],
+            capture: [0; PLAYER_NUM],
             player: None,
         };
         GoGameEngine {
@@ -88,14 +88,14 @@ impl GoGameEngine {
                     let mut node = GoNode {
                         changes: Some(chess_change),
                         steps: head.steps + 1,
-                        deads: head.deads.clone(),
+                        capture: head.capture.clone(),
                         player: match head.player {
                             None => Some(Player::Black),
                             Some(player) => Some(player.switch()),
                         },
                     };
 
-                    node.deads[node.player.unwrap() as usize] += node.changes.as_ref().unwrap().remove.len() as i32;
+                    node.capture[node.player.unwrap() as usize] += node.changes.as_ref().unwrap().remove.len() as i32;
 
                     return node;
                 });
@@ -148,7 +148,7 @@ impl GoGameEngine {
             GoNode {
                 changes: None,
                 steps: head_data.steps + 1,
-                deads: head_data.deads.clone(),
+                capture: head_data.capture.clone(),
                 player: match head_data.player {
                     None => Some(Player::Black),
                     Some(player) => Some(player.switch()),
@@ -170,14 +170,14 @@ impl GoGameEngine {
         return player;
     }
 
-    pub fn deads(&self, player: &Player) -> i32 {
-        let mut deads:i32 = 0;
+    pub fn get_capture(&self, player: &Player) -> i32 {
+        let mut capture:i32 = 0;
 
         self.tree.access_head(|head| {
-            deads = head.deads[*player as usize];
+            capture = head.capture[*player as usize];
         });
 
-        return deads;
+        return capture;
     }
 
     pub fn steps(&self) -> i32 {

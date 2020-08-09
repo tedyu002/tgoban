@@ -225,8 +225,8 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                             protocol::Command::SetGameInfo(game_info) => {
                                 let steps = document.get_element_by_id("steps").unwrap();
                                 let now_playing = document.get_element_by_id("now_playing").unwrap();
-                                let black_dead = document.get_element_by_id("black_dead").unwrap();
-                                let white_dead = document.get_element_by_id("white_dead").unwrap();
+                                let black_capture = document.get_element_by_id("black_capture").unwrap();
+                                let white_capture = document.get_element_by_id("white_capture").unwrap();
 
                                 steps.set_inner_html(&game_info.steps.to_string());
                                 now_playing.set_inner_html(match game_info.playing {
@@ -235,8 +235,8 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                     _ => {return;}
                                 });
 
-                                black_dead.set_inner_html(&game_info.deads[0].to_string());
-                                white_dead.set_inner_html(&game_info.deads[1].to_string());
+                                black_capture.set_inner_html(&game_info.capture[0].to_string());
+                                white_capture.set_inner_html(&game_info.capture[1].to_string());
                             },
                         }
                     }
