@@ -123,6 +123,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                         let command = protocol::Command::SetScoring(score);
                         ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     }
+                } else {
+                    let command = protocol::Command::SetScoring((0, 0));
+                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 }
             }
         } else if let Ok(ws::Message::Ping(msg)) = msg {

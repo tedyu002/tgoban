@@ -194,6 +194,8 @@ impl GoGameEngine {
     }
 
     pub fn regret(&mut self) {
+        self.status = GameStatus::Playing;
+
         let mut chess_change: Option<ChessChange> = None;
 
         self.tree.remove_head(|node_data| {
