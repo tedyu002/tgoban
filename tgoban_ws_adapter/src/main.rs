@@ -7,6 +7,7 @@ use go_game_engine::{Location, GoGameEngine, ChessType, Player, GameStatus};
 use tgoban_ws_protocol as protocol;
 
 const BOARD_SIZE: u8 = 19;
+const KOMI_DEFAULT: f64 = 6.5;
 
 struct GoGame {
     go_game: GoGameEngine,
@@ -86,8 +87,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                 }
 
                 if self.go_game.get_status() == GameStatus::Scoring {
-                    let mut score:(i32, i32) = (0, 0);
-
                     { /* Draw Belong */
                         let mut belong_board: Vec<char> = Vec::new();
 
@@ -101,11 +100,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                                     Some(player) => {
                                         match player {
                                             Player::Black => {
-                                                score.0 += 1;
                                                 'B'
                                             },
                                             Player::White => {
-                                                score.1 += 1;
                                                 'W'
                                             },
                                         }
@@ -117,14 +114,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                         ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     }
                     { /* Set Score info */
-                        score.0 -= self.go_game.get_capture(&Player::White);
-                        score.1 -= self.go_game.get_capture(&Player::Black);
-
-                        let command = protocol::Command::SetScoring(score);
+                        let command = protocol::Command::SetScoring(self.go_game.get_score());
                         ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     }
                 } else {
-                    let command = protocol::Command::SetScoring((0, 0));
+                    let command = protocol::Command::SetScoring((0.0, 0.0));
                     ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 }
             }
@@ -137,6 +131,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                 Player::Black => 'B',
                 Player::White => 'W',
             },
+            komi: self.go_game.komi(),
             capture: [self.go_game.get_capture(&Player::Black), self.go_game.get_capture(&Player::White)],
         })).unwrap());
     }
@@ -145,7 +140,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
 async fn new_go_game(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
     let resp = ws::start(
         GoGame {
-            go_game: GoGameEngine::new(BOARD_SIZE),
+            go_game: GoGameEngine::new(BOARD_SIZE, KOMI_DEFAULT),
         },
         &req,
         stream);

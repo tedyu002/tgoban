@@ -3,7 +3,7 @@ use go_game_engine::{GoGameEngine, Location, MoveError};
 use std::io;
 
 fn main() {
-    let mut game = GoGameEngine::new(19);
+    let mut game = GoGameEngine::new(19, 6.5);
 
     loop {
         println!("{}", game);

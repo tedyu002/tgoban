@@ -223,11 +223,13 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 }
                             },
                             protocol::Command::SetGameInfo(game_info) => {
+                                let komi = document.get_element_by_id("komi").unwrap();
                                 let steps = document.get_element_by_id("steps").unwrap();
                                 let now_playing = document.get_element_by_id("now_playing").unwrap();
                                 let black_capture = document.get_element_by_id("black_capture").unwrap();
                                 let white_capture = document.get_element_by_id("white_capture").unwrap();
 
+                                komi.set_inner_html(&game_info.komi.to_string());
                                 steps.set_inner_html(&game_info.steps.to_string());
                                 now_playing.set_inner_html(match game_info.playing {
                                     'B' => "Black",

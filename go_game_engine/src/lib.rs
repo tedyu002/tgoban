@@ -45,12 +45,13 @@ pub struct GoNode {
 pub struct GoGameEngine {
     board: GoBoard,
     tree: Tree<GoNode>,
+    komi: f64,
     status: GameStatus,
     score_board: Option<ScoreBoard>,
 }
 
 impl GoGameEngine {
-    pub fn new(size: u8) -> GoGameEngine {
+    pub fn new(size: u8, komi: f64) -> GoGameEngine {
         let root_node = GoNode {
             changes: None,
             steps: 0,
@@ -60,6 +61,7 @@ impl GoGameEngine {
         GoGameEngine {
             tree: Tree::new(root_node),
             board: GoBoard::new(size),
+            komi,
             status: GameStatus::Playing,
             score_board: None,
         }
@@ -67,6 +69,10 @@ impl GoGameEngine {
 
     pub fn size(&self) -> u8 {
         return self.board.size();
+    }
+
+    pub fn komi(&self) -> f64 {
+        return self.komi;
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {
@@ -237,6 +243,41 @@ impl GoGameEngine {
             return false;
         }
         return self.score_board.as_ref().unwrap().is_alive(location);
+    }
+
+    pub fn get_score(&self) -> (f64, f64) {
+        let mut score: (f64, f64) = (0.0, 0.0);
+
+        if self.status != GameStatus::Scoring {
+            return score;
+        }
+        for alphabet in 0..self.size() {
+            for digit in 0..self.size() {
+                match self.get_belong(Location {
+                    alphabet,
+                    digit,
+                }) {
+                    None => continue,
+                    Some(player) => {
+                        match player {
+                            Player::Black => {
+                                score.0 += 1.0;
+                            },
+                            Player::White => {
+                                score.1 += 1.0;
+                            },
+                        }
+                    }
+                };
+            }
+        }
+
+        score.0 -= self.get_capture(&Player::White) as f64;
+        score.1 -= self.get_capture(&Player::Black) as f64;
+
+        score.1 += self.komi;
+
+        return score;
     }
 }
 

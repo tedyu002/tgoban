@@ -13,6 +13,7 @@ pub struct Location {
 pub struct GameInfo {
     pub steps: i32,
     pub playing: char,
+    pub komi: f64,
     pub capture: [i32; 2],
 }
 
@@ -31,7 +32,7 @@ pub enum Command {
     Set(Vec<char>),
     SetBelong(Vec<char>),
     SetGameInfo(GameInfo),
-    SetScoring((i32, i32)),
+    SetScoring((f64, f64)),
 }
 
 #[cfg(test)]

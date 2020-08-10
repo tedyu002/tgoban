@@ -15,10 +15,11 @@ use board::BoardWidget;
 use game_info::make_game_info_widget;
 
 const BOARD_SIZE: u8 = 19;
+const KOMI: f64 = 6.5;
 
 fn main() -> Result<(), PlatformError> {
     let game = DruidGoGame {
-        game: Arc::new(RefCell::new(GoGameEngine::new(BOARD_SIZE))),
+        game: Arc::new(RefCell::new(GoGameEngine::new(BOARD_SIZE, KOMI))),
         version: 0,
     };
 
