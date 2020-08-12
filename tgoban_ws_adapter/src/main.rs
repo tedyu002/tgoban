@@ -26,6 +26,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
         if let Ok(ws::Message::Text(text)) = msg {
             let action: Result<protocol::Action, _> = serde_json::from_str(&text);
 
+            let original_status = self.go_game.get_status();
+
             if let Ok(action) = action {
                 let mut draw_chess = true;
                 match action {
@@ -93,37 +95,38 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                     ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 }
 
-                if self.go_game.get_status() == GameStatus::Scoring {
-                    { /* Draw Belong */
-                        let mut belong_board: Vec<protocol::Belong> = Vec::new();
+                if original_status == GameStatus::Scoring || self.go_game.get_status() == GameStatus::Scoring {
+                    /* Draw Belong */
+                    let mut belong_board: Vec<protocol::Belong> = Vec::new();
 
-                        for alphabet in 0..BOARD_SIZE {
-                            for digit in 0..BOARD_SIZE {
-                                belong_board.push(match self.go_game.get_belong(Location {
-                                    alphabet,
-                                    digit,
-                                }) {
-                                    None => protocol::Belong::None,
-                                    Some(player) => {
-                                        match player {
-                                            Player::Black => {
-                                                protocol::Belong::Black
-                                            },
-                                            Player::White => {
-                                                protocol::Belong::White
-                                            },
-                                        }
+                    for alphabet in 0..BOARD_SIZE {
+                        for digit in 0..BOARD_SIZE {
+                            belong_board.push(match self.go_game.get_belong(Location {
+                                alphabet,
+                                digit,
+                            }) {
+                                None => protocol::Belong::None,
+                                Some(player) => {
+                                    match player {
+                                        Player::Black => {
+                                            protocol::Belong::Black
+                                        },
+                                        Player::White => {
+                                            protocol::Belong::White
+                                        },
                                     }
-                                });
-                            }
+                                }
+                            });
                         }
-                        let command = protocol::Command::SetBelong(belong_board);
-                        ctx.text(serde_json::to_string_pretty(&command).unwrap());
                     }
-                    { /* Set Score info */
-                        let command = protocol::Command::SetScoring(self.go_game.get_score());
-                        ctx.text(serde_json::to_string_pretty(&command).unwrap());
-                    }
+                    let command = protocol::Command::SetBelong(belong_board);
+                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
+                }
+
+                if self.go_game.get_status() == GameStatus::Scoring {
+                    /* Set Score info */
+                    let command = protocol::Command::SetScoring(self.go_game.get_score());
+                    ctx.text(serde_json::to_string_pretty(&command).unwrap());
                 } else {
                     let command = protocol::Command::SetScoring((0.0, 0.0));
                     ctx.text(serde_json::to_string_pretty(&command).unwrap());

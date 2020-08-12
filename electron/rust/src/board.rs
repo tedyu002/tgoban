@@ -154,42 +154,43 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                     Ok(command) => {
                         match command {
                             protocol::Command::Set(board) => {
-                                let children = canvas.children();
-
-                                let mut circles: Vec<Element> = Vec::new();
-                                for i in 0..children.length() {
-                                    let child = children.get_with_index(i).unwrap();
-
-                                    if child.tag_name() == "circle" || child.tag_name() == "rect" {
-                                        circles.push(child);
-                                    }
-                                }
-
-                                for element in circles.iter() {
-                                    element.remove();
-                                }
-
                                 for alphabet in 0..BOARD_SIZE {
                                     for digit in 0..BOARD_SIZE  {
                                         let chess = &board[(alphabet as usize) * (BOARD_SIZE as usize) + digit as usize];
 
+                                        let chess_id = format!("chess_{}_{}", alphabet, digit);
+                                        let exist_chess = document.get_element_by_id(&chess_id);
+
                                         let color = match chess {
                                             protocol::ChessType::BlackLive | protocol::ChessType::BlackDead => "black",
                                             protocol::ChessType::WhiteLive | protocol::ChessType::WhiteDead => "white",
-                                            protocol::ChessType::None => continue,
+                                            protocol::ChessType::None => {
+                                                if let Some(exist_chess) = exist_chess {
+                                                    exist_chess.remove();
+                                                }
+                                                continue;
+                                            },
                                         };
 
-                                        let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
+                                        let circle = match exist_chess {
+                                            Some(exist_chess) => {
+                                                exist_chess
+                                            },
+                                            None => {
+                                                let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
+                                                circle.set_attribute("id", &chess_id);
 
-                                        let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
-
-                                        circle.set_attribute("cx", &chess_center.0.to_string());
-                                        circle.set_attribute("cy", &chess_center.1.to_string());
+                                                let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
+                                                circle.set_attribute("cx", &chess_center.0.to_string());
+                                                circle.set_attribute("cy", &chess_center.1.to_string());
+                                                circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
+                                                canvas.append_child(&circle);
+                                                circle
+                                            }
+                                        };
 
                                         circle.set_attribute("stroke", &color);
                                         circle.set_attribute("fill", &color);
-
-                                        circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
 
                                         let opacity = match chess {
                                             protocol::ChessType::BlackLive | protocol::ChessType::WhiteLive => "1.0",
@@ -198,8 +199,6 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                         };
 
                                         circle.set_attribute("opacity", &opacity);
-
-                                        canvas.append_child(&circle);
                                     }
                                 }
                             },
@@ -208,28 +207,46 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                     for digit in 0..BOARD_SIZE {
                                         let belong = &belong_board[(alphabet as usize) * (BOARD_SIZE as usize) + (digit as usize)];
 
+                                        let belong_id = format!("belong_{}_{}", alphabet, digit);
+                                        let exist_belong = document.get_element_by_id(&belong_id);
+
                                         let color = match belong {
                                             protocol::Belong::Black => "black",
                                             protocol::Belong::White => "white",
-                                            protocol::Belong::None => continue,
+                                            protocol::Belong::None => {
+                                                if let Some(exist_belong) = exist_belong {
+                                                    exist_belong.remove();
+                                                }
+                                                continue;
+                                            },
                                         };
 
-                                        let rect = document.create_element_ns(Some(SVG_NS), "rect").unwrap();
+                                        let rect = match exist_belong {
+                                            Some(exist_belong) => {
+                                                exist_belong
+                                            },
+                                            None => {
+                                                let rect = document.create_element_ns(Some(SVG_NS), "rect").unwrap();
 
-                                        let ratio = 2;
-                                        let offset = CHESS_SIZE * ratio / 10;
-                                        let size = CHESS_SIZE * (ratio * 2) / 10;
+                                                rect.set_attribute("id", &belong_id);
 
-                                        let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
+                                                let ratio = 2;
+                                                let offset = CHESS_SIZE * ratio / 10;
+                                                let size = CHESS_SIZE * (ratio * 2) / 10;
 
-                                        rect.set_attribute("x", &(chess_center.0 - offset).to_string());
-                                        rect.set_attribute("y", &(chess_center.1 - offset).to_string());
-                                        rect.set_attribute("width", &size.to_string());
-                                        rect.set_attribute("height", &size.to_string());
+                                                let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
+
+                                                rect.set_attribute("x", &(chess_center.0 - offset).to_string());
+                                                rect.set_attribute("y", &(chess_center.1 - offset).to_string());
+                                                rect.set_attribute("width", &size.to_string());
+                                                rect.set_attribute("height", &size.to_string());
+
+                                                canvas.append_child(&rect);
+                                                rect
+                                            }
+                                        };
 
                                         rect.set_attribute("fill", &color);
-
-                                        canvas.append_child(&rect);
                                     }
                                 }
                             },
