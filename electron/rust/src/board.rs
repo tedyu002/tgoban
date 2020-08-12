@@ -103,13 +103,15 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
         }
     }
 
-    let stars = [3, 9, 15];
+    let stars: [u8; 3] = [3, 9, 15];
     for digit in stars.iter() {
         for alphabet in stars.iter() {
             let circle = document.create_element_ns(Some(SVG_NS), "circle")?;
 
-            circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE))?;
-            circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE))?;
+            let chess_center = to_chess_center(BOARD_SIZE, *alphabet, *digit);
+
+            circle.set_attribute("cx", &chess_center.0.to_string())?;
+            circle.set_attribute("cy", &chess_center.1.to_string())?;
 
             circle.set_attribute("stroke", "black")?;
             circle.set_attribute("fill", "black")?;
@@ -167,9 +169,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                     element.remove();
                                 }
 
-                                for alphabet in 0..(BOARD_SIZE as i32) {
-                                    for digit in 0..(BOARD_SIZE as i32) {
-                                        let chess = &board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+                                for alphabet in 0..BOARD_SIZE {
+                                    for digit in 0..BOARD_SIZE  {
+                                        let chess = &board[(alphabet as usize) * (BOARD_SIZE as usize) + digit as usize];
 
                                         let color = match chess {
                                             protocol::ChessType::BlackLive | protocol::ChessType::BlackDead => "black",
@@ -179,8 +181,10 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                                         let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
 
-                                        circle.set_attribute("cx", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE));
-                                        circle.set_attribute("cy", &format!("{}", CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE));
+                                        let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
+
+                                        circle.set_attribute("cx", &chess_center.0.to_string());
+                                        circle.set_attribute("cy", &chess_center.1.to_string());
 
                                         circle.set_attribute("stroke", &color);
                                         circle.set_attribute("fill", &color);
@@ -200,9 +204,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 }
                             },
                             protocol::Command::SetBelong(belong_board) => {
-                                for alphabet in 0..(BOARD_SIZE as i32) {
-                                    for digit in 0..(BOARD_SIZE as i32) {
-                                        let belong = &belong_board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+                                for alphabet in 0..BOARD_SIZE {
+                                    for digit in 0..BOARD_SIZE {
+                                        let belong = &belong_board[(alphabet as usize) * (BOARD_SIZE as usize) + (digit as usize)];
 
                                         let color = match belong {
                                             protocol::Belong::Black => "black",
@@ -216,8 +220,10 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                         let offset = CHESS_SIZE * ratio / 10;
                                         let size = CHESS_SIZE * (ratio * 2) / 10;
 
-                                        rect.set_attribute("x", &((CHESS_SIZE + CHESS_SIZE / 2 + digit * CHESS_SIZE) - offset).to_string());
-                                        rect.set_attribute("y", &((CHESS_SIZE + CHESS_SIZE / 2 + (BOARD_SIZE as i32 - alphabet - 1) * CHESS_SIZE) - offset).to_string());
+                                        let chess_center = to_chess_center(BOARD_SIZE, alphabet, digit);
+
+                                        rect.set_attribute("x", &(chess_center.0 - offset).to_string());
+                                        rect.set_attribute("y", &(chess_center.1 - offset).to_string());
                                         rect.set_attribute("width", &size.to_string());
                                         rect.set_attribute("height", &size.to_string());
 
@@ -320,4 +326,11 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
     }
 
     Ok(())
+}
+
+fn to_chess_center(board_size: u8, alphabet: u8, digit: u8) -> (i32, i32) {
+    (
+        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + (digit as i32) * CHESS_SIZE,
+        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + ((board_size - alphabet - 1) as i32) * CHESS_SIZE
+    )
 }
