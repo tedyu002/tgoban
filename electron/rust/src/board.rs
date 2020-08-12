@@ -22,6 +22,7 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
 
     let rect = document.create_element_ns(Some(SVG_NS), "rect")?;
 
+    rect.set_attribute("id", "board_area");
     rect.set_attribute("width", &format!("{}", CANVAS_SIZE))?;
     rect.set_attribute("height", &format!("{}", CANVAS_SIZE))?;
     rect.set_attribute("fill", "#a57402")?;
@@ -122,9 +123,9 @@ pub fn draw_empty(canvas: &Element) -> Result<(), JsValue> {
     Ok(())
 }
 
-fn convert_location(container: (f64, f64), offset: (i32, i32)) -> Option<(u8, u8)> {
-    let x = (offset.0 as f64 / (container.0 / (AREA_NUM as f64))) as u8;
-    let y = (offset.1 as f64 / (container.1 / (AREA_NUM as f64))) as u8;
+fn convert_location(container: (f64, f64), offset: (f64, f64)) -> Option<(u8, u8)> {
+    let x = (offset.0 / (container.0 / (AREA_NUM as f64))) as u8;
+    let y = (offset.1 / (container.1 / (AREA_NUM as f64))) as u8;
 
     if x == 0 || y == 0 || x > BOARD_SIZE || y > BOARD_SIZE {
         return None;
@@ -274,15 +275,18 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
 pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
     let document = web_sys::window().unwrap().document().unwrap();
+    let board_area = canvas.query_selector("#board_area").unwrap().unwrap();
 
     { // Board click
         let canvas_c = canvas.clone();
+        let board_area_c = board_area.clone();
         let socket = socket.clone();
 
         let closure = Closure::wrap(Box::new(move |mouse_event: web_sys::MouseEvent| {
-            let rect = canvas_c.get_bounding_client_rect();
+            let canvas_rect = canvas_c.get_bounding_client_rect();
+            let board_rect = board_area_c.get_bounding_client_rect();
 
-            if let Some(location) = convert_location((rect.width(), rect.height()), (mouse_event.offset_x(), mouse_event.offset_y())) {
+            if let Some(location) = convert_location((board_rect.width(), board_rect.height()), (mouse_event.offset_x() as f64, mouse_event.offset_y() as f64 - (canvas_rect.height() - board_rect.height()) / 2.0)) {
                 match mouse_event.button() {
                     0 => socket.send_with_str(&serde_json::to_string_pretty(
                             &protocol::Action::Play(
@@ -297,7 +301,7 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
                 };
             }
         }) as Box<dyn FnMut(_)>);
-        canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+        board_area.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
         closure.forget();
     }
 
