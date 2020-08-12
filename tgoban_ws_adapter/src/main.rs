@@ -61,22 +61,29 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                 };
 
                 if draw_chess { /* Draw Chess */
-                    let mut board: Vec<char> = Vec::new();
+                    let mut board: Vec<protocol::ChessType> = Vec::new();
                     for x in 0..BOARD_SIZE {
                         for y in 0..BOARD_SIZE {
                             let location = Location {
                                 alphabet: x,
                                 digit: y,
                             };
-                            let mut chess = match self.go_game.get_chess(location) {
-                                ChessType::Black => 'B',
-                                ChessType::White => 'W',
-                                ChessType::None => '0',
-                            };
 
+                            let mut is_dead = false;
                             if self.go_game.get_status() == GameStatus::Scoring && !self.go_game.is_alive(location) {
-                                chess = chess.to_lowercase().next().unwrap();
+                                is_dead = true;
                             }
+                            let chess = match self.go_game.get_chess(location) {
+                                ChessType::Black => match is_dead {
+                                    false => protocol::ChessType::BlackLive,
+                                    true => protocol::ChessType::BlackDead,
+                                },
+                                ChessType::White => match is_dead {
+                                    false => protocol::ChessType::WhiteLive,
+                                    true => protocol::ChessType::WhiteDead,
+                                },
+                                ChessType::None => protocol::ChessType::None,
+                            };
 
                             board.push(chess);
                         }
@@ -88,7 +95,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
 
                 if self.go_game.get_status() == GameStatus::Scoring {
                     { /* Draw Belong */
-                        let mut belong_board: Vec<char> = Vec::new();
+                        let mut belong_board: Vec<protocol::Belong> = Vec::new();
 
                         for alphabet in 0..BOARD_SIZE {
                             for digit in 0..BOARD_SIZE {
@@ -96,14 +103,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                                     alphabet,
                                     digit,
                                 }) {
-                                    None => ' ',
+                                    None => protocol::Belong::None,
                                     Some(player) => {
                                         match player {
                                             Player::Black => {
-                                                'B'
+                                                protocol::Belong::Black
                                             },
                                             Player::White => {
-                                                'W'
+                                                protocol::Belong::White
                                             },
                                         }
                                     }

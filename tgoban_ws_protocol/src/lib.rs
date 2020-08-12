@@ -18,6 +18,22 @@ pub struct GameInfo {
 }
 
 #[derive(Deserialize, Serialize)]
+pub enum ChessType {
+    None,
+    BlackLive,
+    BlackDead,
+    WhiteLive,
+    WhiteDead,
+}
+
+#[derive(Deserialize, Serialize)]
+pub enum Belong {
+    None,
+    Black,
+    White,
+}
+
+#[derive(Deserialize, Serialize)]
 #[serde(tag="Action", content="content")]
 pub enum Action {
     Refresh,
@@ -29,8 +45,8 @@ pub enum Action {
 #[derive(Deserialize, Serialize)]
 #[serde(tag="Command", content="content")]
 pub enum Command {
-    Set(Vec<char>),
-    SetBelong(Vec<char>),
+    Set(Vec<ChessType>),
+    SetBelong(Vec<Belong>),
     SetGameInfo(GameInfo),
     SetScoring((f64, f64)),
 }

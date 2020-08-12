@@ -169,12 +169,12 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                                 for alphabet in 0..(BOARD_SIZE as i32) {
                                     for digit in 0..(BOARD_SIZE as i32) {
-                                        let chess = board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+                                        let chess = &board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
 
                                         let color = match chess {
-                                            'B' | 'b' => "black",
-                                            'W' | 'w' => "white",
-                                            _ => continue,
+                                            protocol::ChessType::BlackLive | protocol::ChessType::BlackDead => "black",
+                                            protocol::ChessType::WhiteLive | protocol::ChessType::WhiteDead => "white",
+                                            protocol::ChessType::None => continue,
                                         };
 
                                         let circle = document.create_element_ns(Some(SVG_NS), "circle").unwrap();
@@ -187,9 +187,13 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                                         circle.set_attribute("r", &format!("{}", CHESS_SIZE * 2 / 5));
 
-                                        if chess.is_lowercase() {
-                                            circle.set_attribute("opacity", "0.5");
-                                        }
+                                        let opacity = match chess {
+                                            protocol::ChessType::BlackLive | protocol::ChessType::WhiteLive => "1.0",
+                                            protocol::ChessType::BlackDead | protocol::ChessType::WhiteDead => "0.5",
+                                            _ => continue,
+                                        };
+
+                                        circle.set_attribute("opacity", &opacity);
 
                                         canvas.append_child(&circle);
                                     }
@@ -198,12 +202,12 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                             protocol::Command::SetBelong(belong_board) => {
                                 for alphabet in 0..(BOARD_SIZE as i32) {
                                     for digit in 0..(BOARD_SIZE as i32) {
-                                        let belong = belong_board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
+                                        let belong = &belong_board[(alphabet * (BOARD_SIZE as i32) + digit) as usize];
 
                                         let color = match belong {
-                                            'B' => "black",
-                                            'W' => "white",
-                                            _ => continue,
+                                            protocol::Belong::Black => "black",
+                                            protocol::Belong::White => "white",
+                                            protocol::Belong::None => continue,
                                         };
 
                                         let rect = document.create_element_ns(Some(SVG_NS), "rect").unwrap();
