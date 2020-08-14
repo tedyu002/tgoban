@@ -1,21 +1,22 @@
-use std::sync::{Arc, Weak, RwLock};
+use std::rc::{Rc, Weak};
+use std::cell::RefCell;
 
 pub(crate) struct Node<T> {
     pub data: T,
-    pub parent: Option<Weak<RwLock<Node<T>>>>,
-    pub children: Vec<Arc<RwLock<Node<T>>>>,
+    pub parent: Option<Weak<RefCell<Node<T>>>>,
+    pub children: Vec<Rc<RefCell<Node<T>>>>,
 }
 
 pub(crate) struct Tree<T> {
-    root: Arc<RwLock<Node<T>>>,
+    root: Rc<RefCell<Node<T>>>,
 
     /// The node to be grown, same as the git branch HEAD
-    pub head: Arc<RwLock<Node<T>>>,
+    pub head: Rc<RefCell<Node<T>>>,
 }
 
 impl<T> Tree<T> {
     pub fn new(data: T) -> Tree<T> {
-        let node = Arc::new(RwLock::new(Node::<T> {
+        let node = Rc::new(RefCell::new(Node::<T> {
             data,
             parent: None,
             children: Vec::new(),
@@ -29,111 +30,55 @@ impl<T> Tree<T> {
 
     pub fn access_head<F>(&self, f:F) where
         F: FnOnce(&T) {
-        let head_guard = match self.head.read() {
-            Ok(guard) => {
-                guard
-            },
-            Err(_) => {
-                panic!("Failed to get read lock");
-            }
-        };
 
-        let head_node = &*head_guard;
-        f(&head_node.data);
+        f(&self.head.borrow().data);
     }
 
     pub fn grow<F>(&mut self, f: F) where
         F: FnOnce(&T) -> T {
 
-        let grow_node = {
-            let mut head_guard = match self.head.write() {
-                Ok(guard) => {
-                    guard
-                },
-                Err(_) => {
-                    panic!("Failed to get read lock");
-                }
-            };
+        let new_node = Rc::new(RefCell::new(Node::<T> {
+            data: f(&(*self.head).borrow().data),
+            parent: Some(Rc::downgrade(&self.head)),
+            children: Vec::new(),
+        }));
 
-            let head_node = &mut *head_guard;
+        self.head.borrow_mut().children.push(new_node.clone());
 
-            let new_node = Arc::new(RwLock::new(Node::<T> {
-                data: f(&head_node.data),
-                parent: Some(Arc::downgrade(&self.head)),
-                children: Vec::new(),
-            }));
-
-            head_node.children.push(new_node.clone());
-
-            new_node
-        };
-
-        self.head = grow_node;
+        self.head = new_node;
     }
 
     pub fn remove_head<F>(&mut self, f:F) where
         F: FnOnce(&T) {
-        let parent = {
-            let read_guard = match self.head.write() {
-                Ok(guard) => {
-                    guard
-                },
-                Err(_) => {
-                    panic!("Failed to get write lock");
-                }
-            };
 
-            let head_node = &*read_guard;
-
-            match &head_node.parent {
-                None => {
-                    return;
+        let has_parent = {
+            match (*self.head).borrow().parent {
+                None => false,
+                _ => {
+                    true
                 },
-                Some(weak_node) => {
-                    weak_node.upgrade().unwrap()
-                    /* always successful since the granpa or the root */
-                }
             }
         };
 
-        {
-            let mut parent_write_guard = match parent.write() {
-                Err(_) => {
-                    panic!("Failed to get write lock");
-                },
-                Ok(guard) => {
-                    guard
-                }
-            };
-
-            let parent_node = &mut *parent_write_guard;
-            {
-                let index = {
-                    parent_node.children.iter().position(|x| {
-                        Arc::ptr_eq(&x, &self.head)
-                    }).unwrap()
-                };
-                parent_node.children.remove(index);
-            }
+        if !has_parent {
+            return;
         }
 
-        let remove_node = self.head.clone();
+        let removed_head = self.head.clone();
+        self.head = removed_head.borrow().parent
+            .as_ref()
+            .unwrap() /* Always success since the parent exist */
+            .upgrade()
+            .unwrap() /* Always success since the tree holds */;
 
-        {
-            let guard = match remove_node.read() {
-                Err(_) => {
-                    panic!("Failed to get read lock");
-                },
-                Ok(guard) => {
-                    guard
-                }
-            };
+        let index = {
+            self.head.borrow().children.iter().position(|x| {
+                Rc::ptr_eq(&x, &removed_head)
+            }).unwrap()
+        };
 
-            let remove_node = &*guard;
+        (*self.head).borrow_mut().children.remove(index);
 
-            f(&remove_node.data);
-        }
-
-        self.head = parent;
+        f(&removed_head.borrow().data);
     }
 }
