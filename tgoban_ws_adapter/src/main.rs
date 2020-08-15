@@ -57,6 +57,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GoGame {
                         self.go_game.pass();
                         draw_chess = false;
                     },
+                    protocol::Action::GetSGF => {
+                        ctx.text(serde_json::to_string_pretty(&protocol::Command::Sgf(
+                            self.go_game.to_sgf()
+                        )).unwrap());
+                        return;
+                    },
                     protocol::Action::Refresh => {
                         /* Do nothing */
                     },

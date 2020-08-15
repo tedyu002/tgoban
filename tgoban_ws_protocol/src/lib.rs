@@ -39,6 +39,7 @@ pub enum Action {
     Refresh,
     Play(Location),
     Back,
+    GetSGF,
     Pass,
 }
 
@@ -49,6 +50,7 @@ pub enum Command {
     SetBelong(Vec<Belong>),
     SetGameInfo(GameInfo),
     SetScoring((f64, f64)),
+    Sgf(String),
 }
 
 #[cfg(test)]

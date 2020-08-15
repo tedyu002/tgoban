@@ -279,6 +279,44 @@ impl GoGameEngine {
 
         return score;
     }
+
+    pub fn to_sgf(&self) -> String {
+        let mut sgf = "".to_string();
+
+        sgf.push_str("(;");
+        sgf.push_str("GM[1]FF[4]CA[UTF-8]AP[TGoBan:0.0.1]RU[Japanese]");
+        sgf.push_str(&format!("KM[{}]", self.komi));
+
+        let size = self.size();
+        let mut is_root = true;
+
+        self.tree.preorder(|data: &GoNode| {
+            if !is_root {
+                sgf.push_str(
+                    &format!(";{}[{}]\n",
+                        match data.player.unwrap() {
+                            Player::Black => 'B',
+                            Player::White => 'W',
+                        },
+                        match &data.changes {
+                            None => "".to_string(),
+                            Some(chess_change) => {
+                                format!("{}{}",
+                                    (chess_change.at.location.alphabet as u8 + 'a' as u8) as char,
+                                    ((size - 1 - chess_change.at.location.digit) as u8 + 'a' as u8) as char
+                                )
+                            }
+                        },
+                    )
+                );
+            }
+            is_root = false;
+        });
+
+        sgf.push_str(")");
+
+        return sgf;
+    }
 }
 
 impl std::fmt::Display for GoGameEngine {

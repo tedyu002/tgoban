@@ -132,7 +132,7 @@ fn convert_location(container: (f64, f64), offset: (f64, f64)) -> Option<(u8, u8
     if x == 0 || y == 0 || x > BOARD_SIZE || y > BOARD_SIZE {
         return None;
     } else {
-        return Some((BOARD_SIZE - (y as u8), x as u8 - 1));
+        return Some((x as u8 - 1, BOARD_SIZE - (y as u8)));
     }
 }
 
@@ -275,6 +275,11 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 black_score_disp.set_inner_html(&black_score.to_string());
                                 white_score_disp.set_inner_html(&white_score.to_string());
                             },
+                            protocol::Command::Sgf(sgf) => {
+                                let sgf_area = document.get_element_by_id("sgf").unwrap();
+
+                                sgf_area.dyn_ref::<web_sys::HtmlTextAreaElement>().unwrap().set_value(&sgf);
+                            }
                         }
                     }
                     Err(_) => {
@@ -342,12 +347,22 @@ pub fn bind_event(canvas: &Element, socket: &WebSocket) -> Result<(), JsValue> {
         closure.forget();
     }
 
+    { /* SGF */
+        let socket = socket.clone();
+        let button = document.get_element_by_id("get_sgf").unwrap().clone();
+        let closure = Closure::wrap(Box::new(move |mouse_event: web_sys::MouseEvent| {
+            socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::GetSGF).unwrap());
+        }) as Box<dyn FnMut(_)>);
+        button.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())?;
+        closure.forget();
+    }
+
     Ok(())
 }
 
 fn to_chess_center(board_size: u8, alphabet: u8, digit: u8) -> (i32, i32) {
     (
-        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + (digit as i32) * CHESS_SIZE,
-        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + ((board_size - alphabet - 1) as i32) * CHESS_SIZE
+        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + (alphabet as i32) * CHESS_SIZE,
+        (CHESS_SIZE + CHESS_SIZE / 2) as i32 + ((board_size - digit - 1) as i32) * CHESS_SIZE
     )
 }

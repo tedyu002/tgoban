@@ -36,4 +36,5 @@ features = [
 	'WebSocket',
 	'MessageEvent',
 	'HtmlCollection',
+	'HtmlTextAreaElement',
 ]
