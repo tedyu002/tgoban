@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
 
-use serde::Deserialize;
-
 #[derive(Deserialize, Serialize)]
 pub struct Location {
   pub alphabet: u8,

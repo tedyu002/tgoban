@@ -193,7 +193,7 @@ impl ScoreBoard {
                 };
                 if self.live_board.get(&location) == Live::Dead {
                     let board_chess = go_board.get(&location);
-                    match go_board.get(&location) {
+                    match board_chess {
                         ChessType::None => panic!("The dead could no be no chess"),
                         ChessType::Black => {
                             capture.1 += 1;
