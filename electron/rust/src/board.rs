@@ -137,7 +137,7 @@ fn convert_location(container: (f64, f64), offset: (f64, f64)) -> Option<(u8, u8
 }
 
 pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
-    let ws = WebSocket::new("ws://127.0.0.1:8088/ws/")?;
+    let ws = WebSocket::new("ws://127.0.0.1:8088")?;
 
     {
         let canvas = canvas.clone();
