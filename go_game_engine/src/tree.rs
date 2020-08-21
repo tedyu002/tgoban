@@ -2,22 +2,26 @@ use std::rc::{Rc, Weak};
 use std::cell::RefCell;
 
 pub(crate) struct Node<T> {
-    pub data: T,
-    pub parent: Option<Weak<RefCell<Node<T>>>>,
+    data: T,
+    parent: Option<Weak<RefCell<Node<T>>>>,
 
-    pub first_child: Option<Rc<RefCell<Node<T>>>>,
-    pub last_child: Option<Weak<RefCell<Node<T>>>>,
+    first_child: Option<Rc<RefCell<Node<T>>>>,
+    last_child: Option<Weak<RefCell<Node<T>>>>,
 
-    pub next: Option<Rc<RefCell<Node<T>>>>,
-    pub prev: Option<Weak<RefCell<Node<T>>>>,
+    next: Option<Rc<RefCell<Node<T>>>>,
+    prev: Option<Weak<RefCell<Node<T>>>>,
 }
 
 pub(crate) struct Tree<T> {
     root: Rc<RefCell<Node<T>>>,
 
     /// The node to be grown, same as the git branch HEAD
-    pub head: Rc<RefCell<Node<T>>>,
+    head: Rc<RefCell<Node<T>>>,
 }
+
+
+/// The Rc, RefCell only used internal, no leakage to outer.
+unsafe impl<T: Send> Send for Tree<T> {}
 
 impl<T> Tree<T> {
     pub fn new(data: T) -> Tree<T> {
