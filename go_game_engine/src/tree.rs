@@ -19,9 +19,11 @@ pub(crate) struct Tree<T> {
     head: Rc<RefCell<Node<T>>>,
 }
 
-
 /// The Rc, RefCell only used internal, no leakage to outer.
 unsafe impl<T: Send> Send for Tree<T> {}
+
+/// The Rc, RefCell only used internal, no leakage to outer.
+unsafe impl<T: Sync> Sync for Tree<T> {}
 
 impl<T> Tree<T> {
     pub fn new(data: T) -> Tree<T> {
