@@ -13,6 +13,7 @@ pub struct GameInfo {
     pub playing: char,
     pub komi: f64,
     pub capture: [i32; 2],
+    pub scores: (f64, f64),
 }
 
 #[derive(Deserialize, Serialize)]
@@ -47,7 +48,6 @@ pub enum Command {
     Set(Vec<ChessType>),
     SetBelong(Vec<Belong>),
     SetGameInfo(GameInfo),
-    SetScoring((f64, f64)),
     Sgf(String),
 }
 

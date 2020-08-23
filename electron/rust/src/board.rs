@@ -256,6 +256,8 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
                                 let now_playing = document.get_element_by_id("now_playing").unwrap();
                                 let black_capture = document.get_element_by_id("black_capture").unwrap();
                                 let white_capture = document.get_element_by_id("white_capture").unwrap();
+                                let black_score_disp = document.get_element_by_id("black_score").unwrap();
+                                let white_score_disp = document.get_element_by_id("white_score").unwrap();
 
                                 komi.set_inner_html(&game_info.komi.to_string());
                                 steps.set_inner_html(&game_info.steps.to_string());
@@ -267,13 +269,9 @@ pub fn handle_socket(canvas: &Element) -> Result<WebSocket, JsValue> {
 
                                 black_capture.set_inner_html(&game_info.capture[0].to_string());
                                 white_capture.set_inner_html(&game_info.capture[1].to_string());
-                            },
-                            protocol::Command::SetScoring((black_score, white_score)) => {
-                                let black_score_disp = document.get_element_by_id("black_score").unwrap();
-                                let white_score_disp = document.get_element_by_id("white_score").unwrap();
 
-                                black_score_disp.set_inner_html(&black_score.to_string());
-                                white_score_disp.set_inner_html(&white_score.to_string());
+                                black_score_disp.set_inner_html(&game_info.scores.0.to_string());
+                                white_score_disp.set_inner_html(&game_info.scores.1.to_string());
                             },
                             protocol::Command::Sgf(sgf) => {
                                 let sgf_area = document.get_element_by_id("sgf").unwrap();

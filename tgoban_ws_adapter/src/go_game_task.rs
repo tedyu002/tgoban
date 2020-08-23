@@ -15,17 +15,13 @@ pub(crate) enum ToGo {
     GetSGF,
     GetBoard,
     GetBelong,
-    GetStatus,
     GetGameInfo,
-    GetScore,
 }
 
 pub(crate) enum FromGo {
     SGF(String),
     Board(Vec<protocol::ChessType>),
     BelongBoard(Vec<protocol::Belong>),
-    Status(GameStatus),
-    Score((f64, f64)),
     GameInfo(protocol::GameInfo),
 }
 
@@ -134,18 +130,6 @@ pub(crate) fn start() -> (impl Future<Output = ()>, mpsc::Sender<ToGo>, mpsc::Re
                         Err(_) => break,
                     };
                 },
-                ToGo::GetStatus => {
-                    match sender.send(FromGo::Status(go_game.get_status())).await {
-                        Ok(_) => {},
-                        Err(_) => break,
-                    };
-                },
-                ToGo::GetScore => {
-                    match sender.send(FromGo::Score(go_game.get_score())).await {
-                        Ok(_) => {},
-                        Err(_) => break,
-                    };
-                },
                 ToGo::GetGameInfo => {
                     let game_info = protocol::GameInfo {
                         steps: go_game.steps(),
@@ -155,6 +139,10 @@ pub(crate) fn start() -> (impl Future<Output = ()>, mpsc::Sender<ToGo>, mpsc::Re
                         },
                         komi: go_game.komi(),
                         capture: [go_game.get_capture(&Player::Black), go_game.get_capture(&Player::White)],
+                        scores: match go_game.get_status() {
+                            GameStatus::Scoring => go_game.get_score(),
+                            GameStatus::Playing => (0.0, 0.0),
+                        },
                     };
 
                     match sender.send(FromGo::GameInfo(game_info)).await {
@@ -168,4 +156,3 @@ pub(crate) fn start() -> (impl Future<Output = ()>, mpsc::Sender<ToGo>, mpsc::Re
 
     return (task, incoming_write, outgoing_read);
 }
-
