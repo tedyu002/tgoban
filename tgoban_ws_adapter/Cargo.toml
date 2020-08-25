@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 futures-util = "0.3.5"
-tokio = { version = "0.2", features = ['rt-core', 'rt-threaded', 'sync', 'macros'] }
+tokio = { version = "0.2", features = ['rt-core', 'rt-threaded', 'sync', 'macros', 'process', 'io-util'] }
 tungstenite = "0.11"
 tokio-tungstenite = "0.11"
 serde = "1.0.114"
