@@ -228,7 +228,7 @@ pub struct Move {
 impl std::str::FromStr for Move {
     type Err = ();
     fn from_str(command: &str) -> std::result::Result<Self, <Self as std::str::FromStr>::Err> {
-        let mut tokens: Vec<&str> = command.split_ascii_whitespace().collect();
+        let tokens: Vec<&str> = command.split_ascii_whitespace().collect();
 
         if tokens.len() != 2 {
             return Err(());

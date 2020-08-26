@@ -1,11 +1,17 @@
 mod go_game_task;
 mod ws_task;
+mod command_adapter;
+mod gtp;
 
 use std::net::SocketAddr;
 
 use tokio::net::{TcpListener, TcpStream};
 
 use tokio_tungstenite::WebSocketStream;
+
+pub const BOARD_SIZE: u8 = 19;
+pub const KOMI_DEFAULT: f64 = 6.5;
+
 
 async fn handle_connection(raw_stream: TcpStream, _addr: SocketAddr) {
     let ws_stream: WebSocketStream<TcpStream> = tokio_tungstenite::accept_async(raw_stream)
@@ -17,8 +23,8 @@ async fn handle_connection(raw_stream: TcpStream, _addr: SocketAddr) {
 
     tokio::spawn(go_game_task);
     tokio::spawn(ws_task);
+    command_adapter::spawn_command();
 }
-
 
 #[tokio::main]
 async fn main() {

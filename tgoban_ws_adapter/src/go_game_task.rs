@@ -2,7 +2,7 @@ use std::future::Future;
 
 use tokio::sync::mpsc;
 
-use tgoban_ws_adapter::{BOARD_SIZE, KOMI_DEFAULT};
+use crate::{BOARD_SIZE, KOMI_DEFAULT};
 
 use go_game_engine::{Location, GoGameEngine, ChessType, Player, GameStatus};
 
