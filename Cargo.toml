@@ -8,10 +8,8 @@
 
 [workspace]
 members = [
-	"text_client",
 	"go_game_engine",
 	"tgoban_ws_adapter",
 	"tgoban_ws_protocol",
-	"gui_client",
 	"electron/rust",
 ]
