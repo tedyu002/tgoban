@@ -1,10 +1,12 @@
 mod board;
 mod prelude;
 
+use std::rc::Rc;
+use std::cell::RefCell;
+
 use wasm_bindgen::prelude::*;
 
-#[macro_use]
-extern crate serde_derive;
+use go_game_engine::{GoGameEngine};
 
 
 #[wasm_bindgen]
@@ -15,8 +17,12 @@ pub fn init() -> Result<(), JsValue> {
 
     board::draw_empty(&board)?;
 
+    let go_game_protector = Rc::new(RefCell::new(GoGameEngine::new(19, 6.5)));
+
     let socket = board::handle_socket(&board)?;
-    board::bind_event(&board, &socket)?;
+    board::bind_event(go_game_protector.clone(), &board, &socket)?;
+
+    board::refresh_game_info(&go_game_protector.borrow());
 
     Ok(())
 }

@@ -240,7 +240,7 @@ impl GoGameEngine {
 
     pub fn is_alive(&self, location: Location) -> bool {
         if self.status != GameStatus::Scoring {
-            return false;
+            return true;
         }
         return self.score_board.as_ref().unwrap().is_alive(location);
     }
