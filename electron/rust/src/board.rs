@@ -5,11 +5,10 @@ use web_sys::{Element, WebSocket, MessageEvent};
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use tgoban_ws_protocol as protocol;
-
 use crate::prelude::*;
 
 use go_game_engine::{GoGameEngine, ChessType, Location, Player, GameStatus};
+use tgoban_gtp::{Command, CommandResult, Color, Move, GenMoveResult, Vertex};
 
 const BOARD_SIZE: u8 = 19;
 const CHESS_SIZE: i32 = 100;
@@ -141,14 +140,51 @@ fn convert_location(container: (f64, f64), offset: (f64, f64)) -> Option<(u8, u8
     }
 }
 
-pub fn handle_socket(_canvas: &Element) -> Result<WebSocket, JsValue> {
+pub fn handle_socket(go_game_protector: Rc<RefCell<GoGameEngine>>) -> Result<WebSocket, JsValue> {
     let ws = WebSocket::new("ws://127.0.0.1:8088")?;
 
     {
+        let socket = ws.clone();
+        let go_game_protector = go_game_protector.clone();
         let onmessage_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
-            let _document = web_sys::window().unwrap().document().unwrap();
+            if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
+                let raw: Vec<u16> = txt.iter().collect();
+                let txt = String::from_utf16(&raw).unwrap();
 
-            if let Ok(_txt) = e.data().dyn_into::<js_sys::JsString>() {
+                let command: Result<Command, _> = txt.parse();
+
+                if let Err(_) = command {
+                    return;
+                }
+
+                let command = command.unwrap();
+
+                match command {
+                    Command::BoardSize(id, size) => {
+                        socket.send_with_str("= \n\n");
+                    },
+                    Command::Komi(id, komi) => {
+                        socket.send_with_str("= \n\n");
+                    },
+                    Command::Play(id, mov) => {
+                        let coordinate = mov.vertex.to_number().unwrap();
+                        {
+                            let mut go_game = go_game_protector.borrow_mut();
+                            go_game.make_move(
+                                Location {
+                                    alphabet: coordinate.0,
+                                    digit: coordinate.1,
+                                }
+                            );
+                            draw_board(&go_game);
+                            refresh_game_info(&go_game);
+                        }
+                        socket.send_with_str("= \n\n");
+                    },
+                    _ => {
+                        /* TODO */
+                    },
+                };
             }
         }) as Box<dyn FnMut(MessageEvent)>);
 
@@ -159,7 +195,7 @@ pub fn handle_socket(_canvas: &Element) -> Result<WebSocket, JsValue> {
     {
         let socket = ws.clone();
         let onopen_callback = Closure::wrap(Box::new(move |_e: MessageEvent| {
-            socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::Refresh).unwrap()).expect("Send error");
+// TODO            socket.send_with_str(&serde_json::to_string_pretty(&protocol::Action::Refresh).unwrap()).expect("Send error");
         }) as Box<dyn FnMut(_)>);
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
         onopen_callback.forget();
@@ -168,11 +204,30 @@ pub fn handle_socket(_canvas: &Element) -> Result<WebSocket, JsValue> {
     Ok(ws)
 }
 
-pub fn dispatch_click(go_game: &mut GoGameEngine, location: Location) {
+pub fn dispatch_click(go_game: &mut GoGameEngine, location: Location, socket: &WebSocket) {
     match go_game.get_status() {
         GameStatus::Playing => {
+            let player = go_game.getPlayAs();
+
+            match player {
+                Some(player) => {
+                    if player != go_game.player() {
+                        return;
+                    }
+                },
+                None => {},
+            };
+
             match go_game.make_move(location) {
                 Ok(_) => {
+                    let command = CommandResult::GenMove(
+                        None,
+                        GenMoveResult::Move (
+                            Vertex::from_number(location.alphabet, location.digit)
+                        )
+                    );
+
+                    socket.send_with_str(&format!("{}\n", command.to_string()));
                     draw_board(&go_game);
                     refresh_game_info(&go_game);
                 },
@@ -346,7 +401,7 @@ pub fn bind_event(go_game_protector: Rc<RefCell<GoGameEngine>>, canvas: &Element
     { // Board click
         let canvas_c = canvas.clone();
         let board_area_c = board_area.clone();
-        let _socket = socket.clone();
+        let socket = socket.clone();
         let go_game_protector = go_game_protector.clone();
 
         let closure = Closure::wrap(Box::new(move |mouse_event: web_sys::MouseEvent| {
@@ -361,7 +416,7 @@ pub fn bind_event(go_game_protector: Rc<RefCell<GoGameEngine>>, canvas: &Element
                             alphabet: location.0,
                             digit: location.1,
                         };
-                        dispatch_click(&mut go_game, location);
+                        dispatch_click(&mut go_game, location, &socket);
                     }
                     2 => {
                         go_game.regret();

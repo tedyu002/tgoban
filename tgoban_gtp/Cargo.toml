@@ -1,14 +1,9 @@
 [package]
-name = "tgoban_ws_protocol"
+name = "tgoban_gtp"
 version = "0.1.0"
 authors = ["Tzu-Te Yu <tedyu002@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-crate-type = ["cdylib", "lib"]
 
 [dependencies]
-serde = "1.0.114"
-serde_derive = "1.0.114"
-serde_json = "1.0.57"

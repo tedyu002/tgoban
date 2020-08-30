@@ -1,7 +1,5 @@
-mod go_game_task;
-mod ws_task;
-mod command_adapter;
-mod gtp;
+//mod command_adapter;
+mod arbitator;
 
 use std::net::SocketAddr;
 
@@ -18,12 +16,10 @@ async fn handle_connection(raw_stream: TcpStream, _addr: SocketAddr) {
         .await
         .expect("Error during the websocket handshake occurred");
 
-    let (go_game_task, go_sender, go_receiver) = go_game_task::start();
-    let ws_task = ws_task::start(ws_stream, go_sender, go_receiver);
+    let ws_adaptor = arbitator::ws_adaptor::WsAdaptor::new(ws_stream);
+    let command_adaptor = arbitator::command_adaptor::spawn_command();
 
-    tokio::spawn(go_game_task);
-    tokio::spawn(ws_task);
-    command_adapter::spawn_command();
+    arbitator::arbitator::run(ws_adaptor, command_adaptor).await;
 }
 
 #[tokio::main]

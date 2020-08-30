@@ -8,7 +8,7 @@ use crate::tree::{Tree};
 pub const BOARD_SIZE_MAX: usize = 19;
 pub const PLAYER_NUM: usize = 2;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Player {
     Black = 0,
     White = 1,
@@ -48,6 +48,7 @@ pub struct GoGameEngine {
     komi: f64,
     status: GameStatus,
     score_board: Option<ScoreBoard>,
+    playAs: Option<Player>,
 }
 
 impl GoGameEngine {
@@ -64,6 +65,7 @@ impl GoGameEngine {
             komi,
             status: GameStatus::Playing,
             score_board: None,
+            playAs: None,
         }
     }
 
@@ -73,6 +75,17 @@ impl GoGameEngine {
 
     pub fn komi(&self) -> f64 {
         return self.komi;
+    }
+
+    pub fn setPlayAs(&mut self, player: Player) {
+        self.playAs = Some(player);
+    }
+
+    pub fn getPlayAs(&self) -> Option<Player> {
+        match self.playAs {
+            Some(player) => Some(player),
+            None => None,
+        }
     }
 
     pub fn make_move(&mut self, location: Location) -> Result<(), MoveError> {

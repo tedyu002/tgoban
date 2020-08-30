@@ -6,7 +6,7 @@ use std::cell::RefCell;
 
 use wasm_bindgen::prelude::*;
 
-use go_game_engine::{GoGameEngine};
+use go_game_engine::{GoGameEngine, Player};
 
 
 #[wasm_bindgen]
@@ -18,8 +18,11 @@ pub fn init() -> Result<(), JsValue> {
     board::draw_empty(&board)?;
 
     let go_game_protector = Rc::new(RefCell::new(GoGameEngine::new(19, 6.5)));
+    {
+        go_game_protector.borrow_mut().setPlayAs(Player::Black);
+    }
 
-    let socket = board::handle_socket(&board)?;
+    let socket = board::handle_socket(go_game_protector.clone())?;
     board::bind_event(go_game_protector.clone(), &board, &socket)?;
 
     board::refresh_game_info(&go_game_protector.borrow());
