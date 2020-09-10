@@ -1,0 +1,14 @@
+[package]
+name = "tgoban_sdl_frontend"
+version = "0.1.0"
+authors = ["Tzu-Te Yu <tedyu002@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+go_game_engine = {path="../go_game_engine"}
+
+[dependencies.sdl2]
+version = "0.34"
+features = ["ttf", "image", "gfx", "mixer"]

@@ -23,7 +23,7 @@ impl Player {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Location {
     pub alphabet: u8,
     pub digit: u8,
@@ -359,6 +359,12 @@ impl std::fmt::Display for GoGameEngine {
         });
 
         return res;
+    }
+}
+
+impl std::fmt::Debug for GoGameEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(self, f)
     }
 }
 

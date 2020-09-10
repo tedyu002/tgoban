@@ -12,4 +12,5 @@ members = [
 	"tgoban_ws_adapter",
 	"tgoban_gtp",
 	"electron/rust",
+	"tgoban_iced_frontend",
 ]

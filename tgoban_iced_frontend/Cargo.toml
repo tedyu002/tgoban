@@ -1,0 +1,14 @@
+[package]
+name = "tgoban_iced_frontend"
+version = "0.1.0"
+authors = ["Tzu-Te Yu <tedyu002@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+iced = {version="0.1", features=["canvas", "tokio", "debug"]}
+iced_native = "0.2"
+iced_wgpu = "0.2"
+tokio = {version="0.2", features=["blocking"]}
+go_game_engine = {path="../go_game_engine"}
